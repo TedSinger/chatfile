@@ -17,7 +17,7 @@ func (c *Chat) OpenAIAPIComplete(model string, temperature float32) error {
 	client := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
 	messages := []openai.ChatCompletionMessage{}
 	systemPrompt := DEFAULT_SYSTEM_PROMPT
-	if c.Blocks[len(c.Blocks)-1].Role == "coder" {
+	if c.Blocks[len(c.Blocks)-1].Role.Raw == "coder" {
 		systemPrompt = CODER_SYSTEM_PROMPT
 	}
 	messages = append(messages, openai.ChatCompletionMessage{
@@ -29,7 +29,7 @@ func (c *Chat) OpenAIAPIComplete(model string, temperature float32) error {
 			break
 		}
 		blockRole := "user"
-		if block.Role != "user" {
+		if block.Role.Kind != KindUser {
 			blockRole = "assistant"	
 		}
 		messages = append(messages, openai.ChatCompletionMessage{

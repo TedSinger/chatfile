@@ -12,7 +12,7 @@ func main() {
 	}
 	chat := ChatFromText(string(content))
 	chat.AddImpliedRoles()
-	err = chat.OpenAIAPIComplete("gpt-4o-mini", 0.7)
+	err = chat.OpenAIAPIComplete()
 	if err != nil {
 		log.Fatalf("Error: %v", err)
 	}

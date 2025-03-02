@@ -26,9 +26,25 @@ func KindFromText(text string) Kind {
         return KindUnknown
     }
 }
+
+var KnownPersonas = []string{
+	"coder",
+	"brainstorm",
+	"default",
+}
+
 type Role struct {
 	Raw string
     Kind Kind
+}
+
+func (r *Role) Persona() string {
+	for _, persona := range KnownPersonas {
+		if strings.Contains(r.Raw, persona) {
+			return persona
+		}
+	}
+	return "default"
 }
 
 func RoleFromText(text string) *Role {
@@ -43,5 +59,11 @@ func LineIsRole(line string) bool {
 }
 
 func (r *Role) ToString() string {
-	return "#% " + r.Kind.ToString()
+	if r.Raw == "" {
+		return ""
+	} else if r.Persona() != "default" {
+		return "#% " + r.Persona()
+	} else {
+		return "#% " + r.Kind.ToString()
+	}
 }

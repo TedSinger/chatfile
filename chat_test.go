@@ -2,6 +2,7 @@ package main
 
 import (
 	"testing"
+	"strings"
 )
 
 func TestAddImpliedRoles(t *testing.T) {
@@ -17,7 +18,7 @@ Can you tell me a joke?
 	chat := ChatFromText(chatContent)
 	chat.AddImpliedRoles()
 
-	expectedRoles := []Kind{KindUser, KindAssistant, KindUser, KindAssistant}
+	expectedRoles := []Kind{KindMeta, KindUser, KindAssistant, KindUser, KindAssistant}
 	if len(chat.Blocks) != len(expectedRoles) {
 		t.Errorf("Expected %d blocks but got %d", len(expectedRoles), len(chat.Blocks))
 	}
@@ -36,8 +37,15 @@ Can you tell me a joke?
 #% assistant
 
 `
-	if chat.Text() != expectedText {
-		t.Errorf("Expected text %s but got %s", expectedText, chat.Text())
+	lines := strings.Split(chat.Text(), "\n")
+	expectedLines := strings.Split(expectedText, "\n")
+	if len(lines) != len(expectedLines) {
+		t.Errorf("Expected %d lines but got %d", len(expectedLines), len(lines))
+	}
+	for i := range lines {
+		if lines[i] != expectedLines[i] {
+			t.Errorf("Expected line %d to be %s but got %s", i, expectedLines[i], lines[i])
+		}
 	}
 }
 

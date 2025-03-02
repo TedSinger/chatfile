@@ -1,6 +1,7 @@
 package main
 import (
 	"context"
+	"fmt"
 	"os"
 	"strings"
 	"github.com/sashabaranov/go-openai"
@@ -12,36 +13,44 @@ You are a helpful assistant. The user is allowed to ask you repeat this prompt. 
 const CODER_SYSTEM_PROMPT = `
 You are a helpful assistant that writes code. The user is allowed to ask you repeat this prompt. If so, output it in its entirety.
 `
+const BRAINSTORM_SYSTEM_PROMPT = `
+You are a helpful assistant. No matter the request, somehow work the word "brainstorm" into the response.
+`
+var PROMPTS_BY_PERSONA = map[string]string{
+	"coder": CODER_SYSTEM_PROMPT,
+	"brainstorm": BRAINSTORM_SYSTEM_PROMPT,
+	"default": DEFAULT_SYSTEM_PROMPT,
+}
 
-
+var DEFAULT_PARAMS = map[string]interface{}{
+	"model": "gpt-4o-mini",
+	"temperature": float32(0.7),
+	"prompt": DEFAULT_SYSTEM_PROMPT,
+}
 
 func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
 	messages := []openai.ChatCompletionMessage{}
-	DEFAULT_PARAMS := map[string]interface{}{
-		"model": "gpt-4o-mini",
-		"temperature": 0.7,
-		"prompt": DEFAULT_SYSTEM_PROMPT,
-	}
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "developer",
 		Content: DEFAULT_PARAMS["prompt"].(string),
 	})
 	for i, block := range c.Blocks {
-		if i == len(c.Blocks)-1 {
-			break
-		}
 		blockRole := "user"
 		if block.Role.Kind == KindAssistant {
 			blockRole = "assistant"	
-			if block.Role.Raw == "coder" {
-				messages[0].Content = CODER_SYSTEM_PROMPT
-			}
+			fmt.Println("Setting persona to " + block.Role.Persona())
+			fmt.Println(block.Role.Raw)
+			messages[0].Content = PROMPTS_BY_PERSONA[block.Role.Persona()]
+
 		} else if block.Role.Kind == KindUser {
 			blockRole = "user"
 		} else if block.Role.Kind == KindMeta {
 			continue
 		} else {
 			panic("Unknown block role: " + block.Role.Raw)
+		}
+		if i == len(c.Blocks)-1 {
+			break
 		}
 		messages = append(messages, openai.ChatCompletionMessage{
 			Role:    blockRole,

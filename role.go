@@ -47,6 +47,16 @@ func (r *Role) Persona() string {
 	return "default"
 }
 
+func (r *Role) Kwargs() map[string]string {
+	kwargs := make(map[string]string)
+	for _, arg := range strings.Split(r.Raw, " ") {
+		if strings.Contains(arg, "=") {
+			kwargs[strings.Split(arg, "=")[0]] = strings.Split(arg, "=")[1]
+		}
+	}
+	return kwargs
+}
+
 func RoleFromText(text string) *Role {
 	return &Role{
 		Raw: text,

@@ -21,7 +21,7 @@ func (c *Chat) Text() string {
 
 type Block struct {
 	Role *Role
-	Content []string
+	Content strings.Builder
 }
 
 
@@ -30,18 +30,18 @@ func (b *Block) Text() string {
 	if b.Role.ToString() != "" {
 		result.WriteString(b.Role.ToString() + "\n")
 	}
-	result.WriteString(strings.Join(b.Content, "\n"))
+	result.WriteString(b.Content.String())
 	return result.String()
 }
 
 func ChatFromText(text string) *Chat {
 	lines := strings.Split(text, "\n")
-	blocks := []Block{Block{Role: &Role{Raw: "", Kind: KindMeta}, Content: []string{}}}
+	blocks := []Block{Block{Role: &Role{Raw: "", Kind: KindMeta}, Content: strings.Builder{}}}
 	for _, line := range lines {
 		if LineIsRole(line) {
-			blocks = append(blocks, Block{Role: RoleFromText(line), Content: []string{}})
+			blocks = append(blocks, Block{Role: RoleFromText(line), Content: strings.Builder{}})
 		} else {
-			blocks[len(blocks)-1].Content = append(blocks[len(blocks)-1].Content, line)
+			blocks[len(blocks)-1].Content.WriteString(line)
 		}
 	}
 	return &Chat{Blocks: blocks}
@@ -70,7 +70,7 @@ func (c *Chat) AddImpliedRoles() {
 	if len(c.Blocks) > 0 {
 		lastBlock := &c.Blocks[len(c.Blocks)-1]
 		if lastBlock.Role.Kind == KindUser {
-			c.Blocks = append(c.Blocks, Block{Role: &Role{Raw: "assistant", Kind: KindAssistant}, Content: []string{}})
+			c.Blocks = append(c.Blocks, Block{Role: &Role{Raw: "assistant", Kind: KindAssistant}, Content: strings.Builder{}})
 		}
 	}
 }

@@ -3,7 +3,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
+	"strconv"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -25,14 +25,28 @@ var PROMPTS_BY_PERSONA = map[string]string{
 var DEFAULT_PARAMS = map[string]interface{}{
 	"model": "gpt-4o-mini",
 	"temperature": float32(0.7),
-	"prompt": DEFAULT_SYSTEM_PROMPT,
+}
+
+func updateDefaultParams(kwargs map[string]string) {
+	for k, v := range kwargs {
+		switch k {
+		case "model":
+			DEFAULT_PARAMS["model"] = v
+		case "temperature":
+			temperature, err := strconv.ParseFloat(v, 32)
+			if err != nil {
+				continue
+			}
+			DEFAULT_PARAMS["temperature"] = float32(temperature)
+		}
+	}
 }
 
 func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
 	messages := []openai.ChatCompletionMessage{}
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "developer",
-		Content: DEFAULT_PARAMS["prompt"].(string),
+		Content: PROMPTS_BY_PERSONA["default"],
 	})
 	for i, block := range c.Blocks {
 		blockRole := "user"
@@ -41,10 +55,11 @@ func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
 			fmt.Println("Setting persona to " + block.Role.Persona())
 			fmt.Println(block.Role.Raw)
 			messages[0].Content = PROMPTS_BY_PERSONA[block.Role.Persona()]
-
+			updateDefaultParams(block.Role.Kwargs())
 		} else if block.Role.Kind == KindUser {
 			blockRole = "user"
 		} else if block.Role.Kind == KindMeta {
+			updateDefaultParams(block.Role.Kwargs())
 			continue
 		} else {
 			panic("Unknown block role: " + block.Role.Raw)
@@ -54,24 +69,20 @@ func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
 		}
 		messages = append(messages, openai.ChatCompletionMessage{
 			Role:    blockRole,
-			Content: strings.Join(block.Content, "\n"),
+			Content: block.Content.String(),
 		})
 	}
 	return openai.ChatCompletionRequest{
 		Model:       DEFAULT_PARAMS["model"].(string),
 		Temperature: DEFAULT_PARAMS["temperature"].(float32),
 		Messages:    messages,
+		Stream:      true,
 	}
 }
 
-func (c *Chat) OpenAIAPIComplete() error {
+func (c *Chat) OpenAIAPIComplete() (*openai.ChatCompletionStream, error) {
 	client := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
 
 	request := c.OpenAICompletionRequest()
-	response, err := client.CreateChatCompletion(context.Background(), request)
-	if err != nil {
-		return err
-	}
-	c.Blocks[len(c.Blocks)-1].Content = append(c.Blocks[len(c.Blocks)-1].Content, response.Choices[0].Message.Content)
-	return nil
+	return client.CreateChatCompletionStream(context.Background(), request)
 }

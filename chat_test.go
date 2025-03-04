@@ -33,7 +33,6 @@ Hello, how are you?
 I'm good, thank you! How can I help you today?
 #% user
 Can you tell me a joke?
-
 #% assistant
 
 `

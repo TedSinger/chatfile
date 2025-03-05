@@ -7,7 +7,9 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
-func (c *Chat) ToAnthropicMessages() []anthropic.MessageParam {
+
+func (c *Chat) AnthropicChatCompletionRequest() anthropic.MessageNewParams {
+	model := "claude-3-5-sonnet-20240620"
 	messages := []anthropic.MessageParam{}
 	for _, block := range c.Blocks {
 		if block.Role.Kind == KindUser {
@@ -15,15 +17,14 @@ func (c *Chat) ToAnthropicMessages() []anthropic.MessageParam {
 		} else if block.Role.Kind == KindAssistant && block.Content.String() != "" {
 			messages = append(messages, anthropic.NewAssistantMessage(anthropic.NewTextBlock(block.Content.String())))
 		}
+		if block.Role.Kwargs()["model"] != "" {
+			model = block.Role.Kwargs()["model"]
+		}
 	}
-	return messages
-}
-
-func (c *Chat) AnthropicChatCompletionRequest() anthropic.MessageNewParams {
 	return anthropic.MessageNewParams{
-		Model: anthropic.F("claude-3-5-sonnet-20240620"),
+		Model: anthropic.F(model),
 		MaxTokens: anthropic.F(int64(4096)),
-		Messages: anthropic.F(c.ToAnthropicMessages()),
+		Messages: anthropic.F(messages),
 	}
 }
 

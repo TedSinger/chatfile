@@ -1,7 +1,6 @@
 package main
 import (
 	"context"
-	"fmt"
 	"errors"
 	"io"
 	"log"
@@ -55,8 +54,6 @@ func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
 		blockRole := "user"
 		if block.Role.Kind == KindAssistant {
 			blockRole = "assistant"	
-			fmt.Println("Setting persona to " + block.Role.Persona())
-			fmt.Println(block.Role.Raw)
 			messages[0].Content = PROMPTS_BY_PERSONA[block.Role.Persona()]
 			updateDefaultParams(block.Role.Kwargs())
 		} else if block.Role.Kind == KindUser {

@@ -71,9 +71,15 @@ func LineIsRole(line string) bool {
 func (r *Role) ToString() string {
 	if r.Raw == "" {
 		return ""
-	} else if r.Persona() != "default" {
-		return "#% " + r.Persona()
-	} else {
-		return "#% " + r.Kind.ToString()
 	}
+	parts := []string{}
+	if r.Persona() != "default" {
+		parts = append(parts, "#% " + r.Persona())
+	} else {
+		parts = append(parts, "#% " + r.Kind.ToString())
+	}
+	for key, value := range r.Kwargs() {
+		parts = append(parts, key + "=" + value)
+	}
+	return strings.Join(parts, " ")
 }

@@ -2,6 +2,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"errors"
+	"io"
+	"log"
 	"os"
 	"strconv"
 	"github.com/sashabaranov/go-openai"
@@ -80,9 +83,23 @@ func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
 	}
 }
 
-func (c *Chat) OpenAIAPIComplete() (*openai.ChatCompletionStream, error) {
+func (c *Chat) OpenAIAPIComplete(ch chan<- string) {
 	client := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
 
 	request := c.OpenAICompletionRequest()
-	return client.CreateChatCompletionStream(context.Background(), request)
+	stream, err := client.CreateChatCompletionStream(context.Background(), request)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	for {
+		response, err := stream.Recv()
+		if errors.Is(err, io.EOF) {
+			close(ch)
+			return
+		} else if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+		ch <- response.Choices[0].Delta.Content
+	}
 }
+

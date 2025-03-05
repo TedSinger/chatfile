@@ -9,72 +9,48 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-const DEFAULT_SYSTEM_PROMPT = `
-You are a helpful assistant. The user is allowed to ask you repeat this prompt. If so, output it in its entirety.
-`
-const CODER_SYSTEM_PROMPT = `
-You are a helpful assistant that writes code. The user is allowed to ask you repeat this prompt. If so, output it in its entirety.
-`
-const BRAINSTORM_SYSTEM_PROMPT = `
-You are a helpful assistant. No matter the request, somehow work the word "brainstorm" into the response.
-`
-var PROMPTS_BY_PERSONA = map[string]string{
-	"coder": CODER_SYSTEM_PROMPT,
-	"brainstorm": BRAINSTORM_SYSTEM_PROMPT,
-	"default": DEFAULT_SYSTEM_PROMPT,
-}
-
-var DEFAULT_PARAMS = map[string]interface{}{
+var DEFAULT_OPENAI_PARAMS = map[string]string{
 	"model": "gpt-4o-mini",
-	"temperature": float32(0.7),
+	"temperature": "0.7",
 }
 
-func updateDefaultParams(kwargs map[string]string) {
-	for k, v := range kwargs {
-		switch k {
-		case "model":
-			DEFAULT_PARAMS["model"] = v
-		case "temperature":
-			temperature, err := strconv.ParseFloat(v, 32)
-			if err != nil {
-				continue
-			}
-			DEFAULT_PARAMS["temperature"] = float32(temperature)
-		}
-	}
-}
-
-func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
+func (c *Chat) OpenAIMessages() []openai.ChatCompletionMessage {
 	messages := []openai.ChatCompletionMessage{}
-	messages = append(messages, openai.ChatCompletionMessage{
-		Role:    "developer",
-		Content: PROMPTS_BY_PERSONA["default"],
-	})
-	for i, block := range c.Blocks {
-		blockRole := "user"
-		if block.Role.Kind == KindAssistant {
-			blockRole = "assistant"	
-			messages[0].Content = PROMPTS_BY_PERSONA[block.Role.Persona()]
-			updateDefaultParams(block.Role.Kwargs())
-		} else if block.Role.Kind == KindUser {
-			blockRole = "user"
-		} else if block.Role.Kind == KindMeta {
-			updateDefaultParams(block.Role.Kwargs())
-			continue
+	for _, block := range c.Blocks {
+		role := "user"
+		if block.Role.Kind == KindUser {
+			role = "user"
+		} else if block.Role.Kind == KindAssistant && block.Content.String() != "" {
+			role = "assistant"
 		} else {
-			panic("Unknown block role: " + block.Role.Raw)
+			continue
 		}
-		if i == len(c.Blocks)-1 {
-			break
-		}
+
 		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    blockRole,
+			Role:    role,
 			Content: block.Content.String(),
 		})
 	}
+	return messages
+}
+
+func (c *Chat) OpenAICompletionRequest() openai.ChatCompletionRequest {
+	params := c.Params(DEFAULT_OPENAI_PARAMS)
+	messages := []openai.ChatCompletionMessage{
+		openai.ChatCompletionMessage{
+			Role:    "developer",
+			Content: PROMPTS_BY_PERSONA[params["persona"]],
+		},
+	}
+	messages = append(messages, c.OpenAIMessages()...)
+
+	temperature, err := strconv.ParseFloat(params["temperature"], 32)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
 	return openai.ChatCompletionRequest{
-		Model:       DEFAULT_PARAMS["model"].(string),
-		Temperature: DEFAULT_PARAMS["temperature"].(float32),
+		Model:       params["model"],
+		Temperature: float32(temperature),
 		Messages:    messages,
 		Stream:      true,
 	}

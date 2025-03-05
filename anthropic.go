@@ -3,13 +3,17 @@ import (
 	"context"
 	"log"
 	"os"
+	"strconv"
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
 )
 
+var DEFAULT_ANTHROPIC_PARAMS = map[string]string{
+	"model": "claude-3-5-sonnet-20240620",
+	"temperature": "0.7",
+}
 
-func (c *Chat) AnthropicChatCompletionRequest() anthropic.MessageNewParams {
-	model := "claude-3-5-sonnet-20240620"
+func (c *Chat) AnthropicMessages() []anthropic.MessageParam {
 	messages := []anthropic.MessageParam{}
 	for _, block := range c.Blocks {
 		if block.Role.Kind == KindUser {
@@ -17,14 +21,27 @@ func (c *Chat) AnthropicChatCompletionRequest() anthropic.MessageNewParams {
 		} else if block.Role.Kind == KindAssistant && block.Content.String() != "" {
 			messages = append(messages, anthropic.NewAssistantMessage(anthropic.NewTextBlock(block.Content.String())))
 		}
-		if block.Role.Kwargs()["model"] != "" {
-			model = block.Role.Kwargs()["model"]
-		}
+	}
+	return messages
+}
+
+func (c *Chat) AnthropicChatCompletionRequest() anthropic.MessageNewParams {
+	messages := c.AnthropicMessages()
+	params := c.Params(DEFAULT_ANTHROPIC_PARAMS)
+	prompt := PROMPTS_BY_PERSONA[params["persona"]]
+	temperature, err := strconv.ParseFloat(params["temperature"], 64)
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+	system := []anthropic.TextBlockParam{
+		anthropic.NewTextBlock(prompt),
 	}
 	return anthropic.MessageNewParams{
-		Model: anthropic.F(model),
+		Model: anthropic.F(params["model"]),
 		MaxTokens: anthropic.F(int64(4096)),
 		Messages: anthropic.F(messages),
+		Temperature: anthropic.F(temperature),
+		System: anthropic.F(system),
 	}
 }
 

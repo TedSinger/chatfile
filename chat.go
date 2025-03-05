@@ -74,3 +74,25 @@ func (c *Chat) AddImpliedRoles() {
 		}
 	}
 }
+
+
+func (c *Chat) Params(defaults map[string]string) map[string]string {
+	raw_params := map[string]string{}
+	for k, v := range defaults {
+		raw_params[k] = v
+	}
+	raw_params["persona"] = "default"
+	for i, block := range c.Blocks {
+		if block.Role.Kind == KindMeta {
+			for k, v := range block.Role.Kwargs() {
+				raw_params[k] = v
+			}
+		} else if block.Role.Kind == KindAssistant && i == len(c.Blocks)-1 {
+			for k, v := range block.Role.Kwargs() {
+				raw_params[k] = v
+			}
+			raw_params["persona"] = block.Role.Persona()
+		}
+	}
+	return raw_params
+}

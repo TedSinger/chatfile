@@ -14,13 +14,14 @@ import (
 )
 
 var DEFAULT_BEDROCK_PARAMS = map[string]string{
-	"model": "anthropic.claude-3-5-sonnet-20241022-v1:0",
+	"model": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
 	"temperature": "0.7",
 	"anthropic_version": "bedrock-2023-05-31",
 	"max_tokens": "4096",
 	"stop_sequences": "[]",
 	"top_p": "0.9",
 	"top_k": "250",
+	"persona": DEFAULT_SYSTEM_PROMPT,
 }
 
 type BedrockMessage struct {
@@ -41,6 +42,7 @@ type BedrockConversation struct {
 	TopP float64 `json:"top_p"`
 	TopK int32 `json:"top_k"`
 	StopSequences []string `json:"stop_sequences"`
+	SystemPrompt string `json:"system"`
 }
 
 
@@ -87,6 +89,7 @@ func (c *Chat) BedrockConversation() (*BedrockConversation, string) {
 		TopP: topP,
 		TopK: int32(topK),
 		StopSequences: []string{},
+		SystemPrompt: PROMPTS_BY_PERSONA[params["persona"]],
 	}, params["model"]
 }
 

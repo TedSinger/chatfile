@@ -60,7 +60,7 @@ func (c *Chat) BedrockConversation() (*BedrockConversation, string) {
 		}
 		messages = append(messages, BedrockMessage{
 			Role: bedrockRole,
-			Content: []BedrockContent{BedrockContent{Text: block.Text(), Type: "text"}},
+			Content: []BedrockContent{BedrockContent{Text: block.Content.String(), Type: "text"}},
 		})
 	}
 

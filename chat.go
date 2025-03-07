@@ -12,7 +12,7 @@ func (c *Chat) Text() string {
 	var result strings.Builder
 	for _, block := range c.Blocks {
 		if strings.TrimSpace(block.Text()) != "" {
-			result.WriteString(block.Text() + "\n")
+			result.WriteString(block.Text())
 		}
 	}
 	return result.String()
@@ -30,18 +30,26 @@ func (b *Block) Text() string {
 	if b.Role.ToString() != "" {
 		result.WriteString(b.Role.ToString() + "\n")
 	}
-	result.WriteString(b.Content.String())
+	if b.Content.String() != "" {
+		result.WriteString(strings.TrimRight(b.Content.String(), " \n") + "\n")
+	}
 	return result.String()
 }
 
 func ChatFromText(text string) *Chat {
 	lines := strings.Split(text, "\n")
 	blocks := []Block{Block{Role: &Role{Raw: "", Kind: KindMeta}, Content: strings.Builder{}}}
-	for _, line := range lines {
+	for i, line := range lines {
 		if LineIsRole(line) {
 			blocks = append(blocks, Block{Role: RoleFromText(line), Content: strings.Builder{}})
 		} else {
-			blocks[len(blocks)-1].Content.WriteString(line)
+			if i == len(lines) - 1 {
+				blocks[len(blocks)-1].Content.WriteString(line)
+			} else if LineIsRole(lines[i+1]) {
+				blocks[len(blocks)-1].Content.WriteString(line)
+			} else {
+				blocks[len(blocks)-1].Content.WriteString(line + "\n")
+			}
 		}
 	}
 	return &Chat{Blocks: blocks}

@@ -6,13 +6,13 @@ import (
 )
 
 func TestAddImpliedRoles(t *testing.T) {
-	// Template content for foo.chat
 	chatContent := `#%user
 Hello, how are you?
 #%
 I'm good, thank you! How can I help you today?
 #%user
 Can you tell me a joke?
+one about a jungle fowl and a transit corridor
 `
 
 	chat := ChatFromText(chatContent)
@@ -33,8 +33,8 @@ Hello, how are you?
 I'm good, thank you! How can I help you today?
 #% user
 Can you tell me a joke?
+one about a jungle fowl and a transit corridor
 #% assistant
-
 `
 	lines := strings.Split(chat.Text(), "\n")
 	expectedLines := strings.Split(expectedText, "\n")

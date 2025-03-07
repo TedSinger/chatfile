@@ -14,7 +14,7 @@ func main() {
 	os.WriteFile(os.Args[1], []byte(chat.Text()), 0744)
 	stream := make(chan string)
 	go func() {
-		chat.AnthropicAPIComplete(stream)
+		chat.BedrockAPIComplete(stream)
 	}()
 	outfile, err := os.OpenFile(os.Args[1], os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {

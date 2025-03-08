@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -22,6 +23,17 @@ var DEFAULT_BEDROCK_PARAMS = map[string]string{
 	"top_p": "0.9",
 	"top_k": "250",
 	"persona": DEFAULT_SYSTEM_PROMPT,
+}
+
+func AWSConnectionIsPossible() bool {
+	os.Setenv("AWS_EC2_METADATA_DISABLED", "true")
+    cfg, err := config.LoadDefaultConfig(context.TODO())
+    if err != nil {
+        return false
+    }
+
+    _, err = cfg.Credentials.Retrieve(context.TODO())
+    return err == nil
 }
 
 type BedrockMessage struct {

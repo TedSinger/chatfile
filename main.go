@@ -6,7 +6,7 @@ import (
 )
 
 func preferredEndpoint(c *Chat, stream chan string) func() {
-	if os.Getenv("AWS_ACCESS_KEY") != "" {
+	if AWSConnectionIsPossible() {
 		log.Println("Using Bedrock")
 		return func() { c.BedrockAPIComplete(stream) }
 	} else if os.Getenv("ANTHROPIC_API_KEY") != "" {

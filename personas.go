@@ -1,5 +1,15 @@
 package main
 
+import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
 const DEFAULT_SYSTEM_PROMPT = `
 You are a research assistant with expertise across academic disciplines. Your communication style is clear, direct, succinct, and focused on providing actionable insights. While you aim to be precise and accurate, you also acknowledge uncertainty when it exists.
 
@@ -33,10 +43,88 @@ Report your lowest confidence among your understanding of the request, your appr
 const BRAINSTORM_SYSTEM_PROMPT = `
 This is a space for your private thoughts. Use it to brainstorm, plan, and sketch uncertain ideas (which you may discard or explore in more depth). It will NOT be shared with the user, so focus on efficient thinking, not demeanor.
 `
+type Persona map[string]string
 
+type PersonaConfig map[string]Persona
 
-var PROMPTS_BY_PERSONA = map[string]string{
-	"coder": CODER_SYSTEM_PROMPT,
-	"brainstorm": BRAINSTORM_SYSTEM_PROMPT,
-	"default": DEFAULT_SYSTEM_PROMPT,
+var DEFAULT_PERSONA = Persona{
+	"prompt": DEFAULT_SYSTEM_PROMPT,
+	"temperature": "0.7",
+}
+var DEFAULT_CODER_PERSONA = Persona{
+	"prompt": CODER_SYSTEM_PROMPT,
+}
+
+var DEFAULT_BRAINSTORM_PERSONA = Persona{
+	"prompt": BRAINSTORM_SYSTEM_PROMPT,
+}
+
+func (p *PersonaConfig) GetPersona(name string) *Persona {
+	persona := DEFAULT_PERSONA
+	if newPersona, ok := (*p)[name]; ok {
+		for k, v := range newPersona {
+			persona[k] = v
+		}
+	}
+	return &persona
+}
+
+func personaConfigFromJson(jsonCfg []byte) (*PersonaConfig, error) {
+	var config PersonaConfig
+	err := json.Unmarshal(jsonCfg, &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+func configFileName() (string, error) {
+	cfgFileName := os.Getenv("CHATFILE_CONFIG_FILE")
+	if cfgFileName == "" {
+		cfgFileName = "~/.config/chatfile/personas.json"
+	}
+
+	if strings.HasPrefix(cfgFileName, "~") {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		cfgFileName = filepath.Join(homeDir, cfgFileName[1:])
+	}
+
+	if _, err := os.Stat(cfgFileName); os.IsNotExist(err) {
+		return "", fmt.Errorf("Config file does not exist: %s", cfgFileName)
+	}
+
+	return cfgFileName, nil
+}
+
+func GetPersonaConfig() *PersonaConfig {
+	defaultConfig := PersonaConfig{
+		"default": DEFAULT_PERSONA,
+		"coder": DEFAULT_CODER_PERSONA,
+		"brainstorm": DEFAULT_BRAINSTORM_PERSONA,
+	}
+	cfgFileName, err := configFileName()
+	if err != nil {
+		log.Printf("Error getting config file name: %v", err)
+		return &defaultConfig
+	}
+	cfgFile, err := os.Open(cfgFileName)
+	if err != nil {
+		log.Printf("Error opening config file: %v", err)
+		return &defaultConfig
+	}
+	defer cfgFile.Close()
+	cfgBytes, err := io.ReadAll(cfgFile)
+	if err != nil {
+		log.Printf("Error reading config file: %v", err)
+		return &defaultConfig
+	}
+	personaConfig, err := personaConfigFromJson(cfgBytes)
+	if err != nil {
+		log.Printf("Error parsing config file: %v", err)
+		return &defaultConfig
+	}
+	return personaConfig
 }

@@ -56,6 +56,7 @@ func ChatFromText(text string) *Chat {
 }
 
 func (c *Chat) AddImpliedRoles() {
+	// FIXME: brainstorm and other thinking blocks should be followed by an assistant block
 	lastRoleKind := KindUser
 	for i := range c.Blocks {
 		block := &c.Blocks[i] // Get a reference to the block
@@ -82,24 +83,33 @@ func (c *Chat) AddImpliedRoles() {
 		}
 	}
 }
+type SourcedParam struct {
+	Source string
+	Key string
+	Value string
+}
 
-
-func (c *Chat) Params(defaults map[string]string) map[string]string {
-	raw_params := map[string]string{}
-	for k, v := range defaults {
-		raw_params[k] = v
+func (c *Chat) MergeParams(personaConfig *PersonaConfig, endpointDefaults map[string]string) map[string]SourcedParam {
+	raw_params := map[string]SourcedParam{}
+	for k, v := range endpointDefaults {
+		raw_params[k] = SourcedParam{Source: "endpoint default", Key: k, Value: v}
 	}
-	raw_params["persona"] = "default"
-	for i, block := range c.Blocks {
+	lastBlock := c.Blocks[len(c.Blocks)-1]
+	for k, v := range lastBlock.Role.Kwargs() {
+		raw_params[k] = SourcedParam{Source: "last block kwarg", Key: k, Value: v}
+	}
+	for _, keyword := range lastBlock.Role.Keywords() {
+		if personaParam, ok := (*personaConfig)[keyword]; ok {
+			for k, v := range personaParam {
+				raw_params[k] = SourcedParam{Source: "last block persona", Key: k, Value: v}
+			}
+		}
+	}
+	for _, block := range c.Blocks {
 		if block.Role.Kind == KindMeta {
 			for k, v := range block.Role.Kwargs() {
-				raw_params[k] = v
+				raw_params[k] = SourcedParam{Source: "meta block", Key: k, Value: v}
 			}
-		} else if block.Role.Kind == KindAssistant && i == len(c.Blocks)-1 {
-			for k, v := range block.Role.Kwargs() {
-				raw_params[k] = v
-			}
-			raw_params["persona"] = block.Role.Persona()
 		}
 	}
 	return raw_params

@@ -27,24 +27,9 @@ func KindFromText(text string) Kind {
     }
 }
 
-var KnownPersonas = []string{
-	"coder",
-	"brainstorm",
-	"default",
-}
-
 type Role struct {
 	Raw string
     Kind Kind
-}
-
-func (r *Role) Persona() string {
-	for _, persona := range KnownPersonas {
-		if strings.Contains(r.Raw, persona) {
-			return persona
-		}
-	}
-	return "default"
 }
 
 func (r *Role) Kwargs() map[string]string {
@@ -55,6 +40,16 @@ func (r *Role) Kwargs() map[string]string {
 		}
 	}
 	return kwargs
+}
+
+func (r *Role) Keywords() []string {
+	keywords := []string{}
+	for _, arg := range strings.Split(r.Raw, " ") {
+		if !strings.Contains(arg, "=") && arg != "#%" {
+			keywords = append(keywords, arg)
+		}
+	}
+	return keywords
 }
 
 func RoleFromText(text string) *Role {
@@ -72,11 +67,11 @@ func (r *Role) ToString() string {
 	if r.Raw == "" {
 		return ""
 	}
-	parts := []string{}
-	if r.Persona() != "default" {
-		parts = append(parts, "#% " + r.Persona())
-	} else {
-		parts = append(parts, "#% " + r.Kind.ToString())
+	parts := []string{"#%", r.Kind.ToString()}
+	for _, keyword := range r.Keywords() {
+		if keyword != r.Kind.ToString() {
+			parts = append(parts, keyword)
+		}
 	}
 	for key, value := range r.Kwargs() {
 		parts = append(parts, key + "=" + value)

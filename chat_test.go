@@ -6,11 +6,11 @@ import (
 )
 
 func TestAddImpliedRoles(t *testing.T) {
-	chatContent := `#%user
+	chatContent := `#% user
 Hello, how are you?
 #%
 I'm good, thank you! How can I help you today?
-#%user
+#% user
 Can you tell me a joke?
 one about a jungle fowl and a transit corridor
 `

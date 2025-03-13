@@ -14,7 +14,7 @@ func TestRole(t *testing.T) {
 	}{
 		{"#% user", KindUser, []string{"user"}, map[string]string{}},
 		{"#% assistant", KindAssistant, []string{"assistant"}, map[string]string{}},
-		{"#% brainstorm", KindAssistant, []string{"brainstorm"}, map[string]string{}},
+		{"#% brainstorm", KindUnknown, []string{"brainstorm"}, map[string]string{}},
 		{"#% meta temperature=0.5", KindMeta, []string{"meta"}, map[string]string{"temperature": "0.5"}},
 		{"#% unknown", KindUnknown, []string{"unknown"}, map[string]string{}},
 	}

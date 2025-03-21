@@ -1,0 +1,23 @@
+name: chatfile
+version: 0.1.0
+
+authors:
+  - Ted Singer <github@fernmyth.net>
+
+targets:
+  chatfile:
+    main: src/chatfile.cr
+
+crystal: '>= 1.15.1'
+
+license: MIT
+
+dependencies:
+  openai:
+    github: spider-gazelle/crystal-openai
+  
+  anthropic:
+    github: jgaskins/anthropic
+  
+  aws:
+    github: jgaskins/aws

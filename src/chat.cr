@@ -1,12 +1,17 @@
+require "./block"
+
 module Chat
   class Chat
-    def initialize(blocks : Array(Block))
+    getter blocks : Array(Block::Block)
+    getter roles : Array(String)
+
+    def initialize(blocks : Array(Block::Block))
       @blocks = blocks
       @roles = infer_roles(blocks)
     end
 
-    private def infer_roles(blocks : Array(Block)) : Array(Role)
-      roles = [] of Role
+    private def infer_roles(blocks : Array(Block::Block)) : Array(String)
+      roles = [] of String
       previous_role = nil
 
       blocks.each_with_index do |block, index|

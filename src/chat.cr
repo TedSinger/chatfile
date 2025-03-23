@@ -1,4 +1,5 @@
 require "./block"
+require "./persona"
 
 module Chat
   class Chat
@@ -40,6 +41,22 @@ module Chat
       end
 
       roles
+    end
+
+    private def fragment_from_meta_blocks(persona_config : Persona::PersonaConfig)
+      @blocks.zip(@roles).select { |block, role| role == Role::META }.map do |block, role|
+        block.persona_line.to_persona_and_fragment(persona_config)[1]
+      end.reduce(Persona::PersonaFragment.zero_persona) do |acc, fragment|
+        acc.merge_on_top_of(fragment)
+      end
+    end
+
+    def last_block_persona(default_params : Persona::PersonaFragment, persona_config : Persona::PersonaConfig)
+      block_persona, block_fragment = @blocks[-1].persona_line.to_persona_and_fragment(persona_config)
+    
+      meta_fragment = fragment_from_meta_blocks(persona_config)
+      default_persona = persona_config["default"] || Persona::PersonaFragment.zero_persona
+      block_fragment.merge_on_top_of(meta_fragment).merge_on_top_of(block_persona).merge_on_top_of(default_persona).merge_on_top_of(default_params)
     end
   end
 end

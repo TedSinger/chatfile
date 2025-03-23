@@ -26,10 +26,8 @@ blocks.each do |block|
 end
 
 chat = Chat::Chat.new(blocks)
-persona_config = {
-  "max_tokens" => 1000,
-  "temperature" => 0.5,
-}
+persona_config = Persona.parse_persona_config("{\"foo\":{\"prompt\":\"You are a helpful assistant.\",\"key_value_pairs\":{\"max_tokens\":1000,\"temperature\":0.5}}}")
+
 
 channel = Channel(String).new
 spawn do

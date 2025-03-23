@@ -24,37 +24,51 @@ module Bedrock
         }
     )
 
-    def self.bedrock_api_complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig, ch : Channel(String))
+    def self.bedrock_api_complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
         # cfg = AWS::Config.new
         persona = chat.last_block_persona(DEFAULT_BEDROCK_PARAMS, persona_config)
         bedrock_conversation = BedrockConversation.new(chat, persona_config)
         conversation_body = JSON.build do |json|
             json.object do
-                json.field("messages", chat.blocks.map do |block|
-                {
-                    "role" => block.persona_line.keywords.includes?("user") ? "user" : "assistant",
-                    "content" => [{"type" => "text", "text" => block.content.strip}]
-                }
+                json.field("messages", chat.blocks.map { |block|
+                    {
+                        "role" => block.persona_line.keywords.includes?("user") ? "user" : "assistant",
+                        "content" => [{"type" => "text", "text" => block.content.strip}]
+                    }
+                })
                 json.field("max_tokens", (persona.key_value_pairs["max_tokens"]).to_i)
                 json.field("temperature", (persona.key_value_pairs["temperature"]).to_f)
                 json.field("anthropic_version", persona.key_value_pairs["anthropic_version"])
                 json.field("top_p", (persona.key_value_pairs["top_p"]).to_f)
                 json.field("top_k", (persona.key_value_pairs["top_k"]).to_i)
                 json.field("stop_sequences", JSON.parse(persona.key_value_pairs["stop_sequences"]))
-                # json.field("system", persona_config.prompt || DEFAULT_BEDROCK_PARAMS["prompt"]) # FIXME
-                end)
+                json.field("system", persona.prompt)
             end
         end
+        puts conversation_body
 
         client = AWS::BedrockRuntime::Client.new
-        response = client.invoke_model_with_response_stream(conversation_body)
-        response.stream.each do |event|
-            case event
-            when AWS::BedrockRuntime::Types::ResponseStreamMemberChunk
-                ch.send(event.chunk.delta.text)
+        response = client.invoke_model_with_response_stream(
+            persona.key_value_pairs["model"],
+            conversation_body,
+            "application/json",
+            "application/json",
+            nil,
+            nil,
+            nil,
+            nil
+        )
+        output_ch = Channel(String).new
+        input_ch = response.chunks
+        spawn do
+            loop do
+                chunk = input_ch.receive?
+                break unless chunk
+                output_ch.send(chunk.as_h["delta"].as_h["text"].as_s)
             end
+            output_ch.close
         end
-        ch.close
+        output_ch
     end                
 
 end

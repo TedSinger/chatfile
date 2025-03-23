@@ -55,7 +55,7 @@ module Persona
     end
 
     def [](name : String) : Persona | Nil
-      @config[name] || @config.values.find { |persona| persona.name.split('_').join.upcase == name.upcase }
+      @config[name]? || @config.values.find { |persona| persona.name.split('_').join.upcase == name.upcase }
     end
   end
 

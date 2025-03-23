@@ -13,8 +13,7 @@ example_text = <<-TEXT
 Kindly relate a humorous anecdote regarding a jungle fowl and a transit corridor
 #% brainstorm temperature=1.0
 Any number of cliched jokes about a chicken crossing the road would fit. But the user's word choice is oddly technical. Let's try something more futuristic
-#% assistant
-What motivation compelled the RoosterBot to trespass across the hyperlane? To access the excluded zone!
+
 TEXT
 
 blocks = Block.blocks_from_text(example_text)
@@ -26,19 +25,19 @@ blocks.each do |block|
 end
 
 chat = Chat::Chat.new(blocks)
-persona_config = Persona.parse_persona_config("{\"foo\":{\"prompt\":\"You are a helpful assistant.\",\"key_value_pairs\":{\"max_tokens\":1000,\"temperature\":0.5}}}")
+persona_json = <<-JSON
+{"default":{"prompt":"You are a helpful assistant.", "max_tokens":"1000","temperature":"0.5"}}
+JSON
+persona_config = Persona.parse_persona_config(persona_json)
 
 
-channel = Channel(String).new
-spawn do
-  Bedrock.bedrock_api_complete(chat, persona_config, channel)
-end
-
+chunks = Bedrock.bedrock_api_complete(chat, persona_config)
 spawn do
   loop do
-    message = channel.receive?
-    break unless message
-    puts message
+    chunk = chunks.receive?
+    break unless chunk
+    puts chunk
   end
 end
+
 Fiber.yield

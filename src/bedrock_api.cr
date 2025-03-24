@@ -67,7 +67,9 @@ module AWS
                         spawn do
                             until response.body_io.closed?
                                 message = EventStream.next_from_io(response.body_io)
-                                ch.send(generic_event_to_bedrock_event(message))
+                                if message
+                                    ch.send(generic_event_to_bedrock_event(message))
+                                end
                             end
                             ch.close
                         end

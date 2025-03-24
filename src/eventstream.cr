@@ -29,7 +29,7 @@ module EventStream
         end
     end
 
-    def self.next_from_io(io : IO) : EventMessage
+    def self.next_from_io(io : IO) : EventMessage | Nil
         total_length : Int32 = io.read_bytes(Int32, IO::ByteFormat::BigEndian)
         headers_length : Int32 = io.read_bytes(Int32, IO::ByteFormat::BigEndian)
         prelude_crc = io.read_bytes(Int32, IO::ByteFormat::BigEndian)
@@ -39,7 +39,7 @@ module EventStream
         payload_length = total_length - 4 - 4 - 4 - headers_length - 4
 
         if payload_length < 0
-            return next_from_io(io)
+            return nil
         end
 
         payload_string = io.read_string(payload_length)

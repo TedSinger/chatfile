@@ -67,7 +67,7 @@ module Bedrock
                 when "content_block_delta"
                     output_ch.send(event["delta"]["text"].as_s)
                 when "content_block_stop"
-                    # puts event
+                    break
                 when "error"
                     raise "Error: #{event["error"]}"
                 when "content_block_start"
@@ -75,7 +75,7 @@ module Bedrock
                 when "message_start"
                     # puts event
                 when "message_delta"
-                    # puts event
+                    break
                 when "message_stop"
                     break
                 else

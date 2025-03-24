@@ -48,7 +48,7 @@ module Bedrock
         puts conversation_body
 
         client = AWS::BedrockRuntime::Client.new
-        response = client.invoke_model_with_response_stream(
+        response_ch = client.invoke_model_with_response_stream(
             persona.key_value_pairs["model"],
             conversation_body,
             "application/json",
@@ -59,12 +59,28 @@ module Bedrock
             nil
         )
         output_ch = Channel(String).new
-        input_ch = response.chunks
         spawn do
-            loop do
-                chunk = input_ch.receive?
-                break unless chunk
-                output_ch.send(chunk.as_h["delta"].as_h["text"].as_s)
+            while event = response_ch.receive?
+                # puts event
+
+                case event["type"]
+                when "content_block_delta"
+                    output_ch.send(event["delta"]["text"].as_s)
+                when "content_block_stop"
+                    # puts event
+                when "error"
+                    raise "Error: #{event["error"]}"
+                when "content_block_start"
+                    # puts event
+                when "message_start"
+                    # puts event
+                when "message_delta"
+                    # puts event
+                when "message_stop"
+                    break
+                else
+                    raise "Unknown event type: #{event["type"]}"
+                end
             end
             output_ch.close
         end

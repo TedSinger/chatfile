@@ -26,18 +26,15 @@ end
 
 chat = Chat::Chat.new(blocks)
 persona_json = <<-JSON
-{"default":{"prompt":"You are a helpful assistant.", "max_tokens":"1000","temperature":"0.5"}}
+{"default":{"prompt":"You are a helpful assistant.", "max_tokens":"100","temperature":"0.5"}}
 JSON
 persona_config = Persona.parse_persona_config(persona_json)
 
 
 chunks = Bedrock.bedrock_api_complete(chat, persona_config)
-spawn do
-  loop do
-    chunk = chunks.receive?
-    break unless chunk
-    puts chunk
-  end
-end
 
-Fiber.yield
+loop do
+  chunk = chunks.receive?
+  break if chunk == nil
+  print chunk
+end

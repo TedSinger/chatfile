@@ -1,11 +1,8 @@
 require "aws/client"
 require "json"
-require "openssl"
 require "awscr-signer"
 require "./eventstream"
 require "base64"
-Awscr::Signer::HeaderCollection::BLACKLIST_HEADERS << "connection"
-
 
 module AWS
     module BedrockRuntime
@@ -22,6 +19,12 @@ module AWS
             end
           
             
+            def generic_event_to_bedrock_event(event : EventStream::EventMessage) : JSON::Any
+                j = JSON.parse(event.payload).as_h
+                i = Base64.decode(j["bytes"].as_s)
+                JSON.parse(String.new(i))
+            end
+
             def invoke_model_with_response_stream(
                 model_id : String,
                 body : String,
@@ -35,8 +38,6 @@ module AWS
                 headers = HTTP::Headers.new
                 headers["X-Amzn-Bedrock-Accept"] = accept
                 headers["Content-Type"] = content_type
-                headers["Connection"] = "keep-alive"
-                headers["User-Agent"] = "Crystal AWS #{VERSION}"
               
 
                 if guardrail_identifier
@@ -55,43 +56,25 @@ module AWS
                     headers["X-Amzn-Bedrock-Trace"] = trace
                 end
 
-                
-                host = endpoint.host.not_nil!
-                port = endpoint.port
-                tls = true
-                http = if port
-                          HTTP::Client.new(host, port, tls: tls)
-                       else
-                          HTTP::Client.new(host, tls: tls)
-                       end
-                http.before_request do |request|
-                    request.headers.delete "Authorization"
-                    request.headers.delete "X-Amz-Content-Sha256"
-                    request.headers.delete "X-Amz-Date"
-                    @signer.sign request
-                end
 
                 ch = Channel(JSON::Any).new
-                http.post(
-                    path: "/model/#{model_id}/invoke-with-response-stream",
-                    headers: headers,
-                    body: body
-                ) do |response|
-                    spawn do
-                        until response.body_io.closed?
-                            message = EventStream.next_from_io(response.body_io)
-                            j = JSON.parse(message.payload).as_h
-                            i = Base64.decode(j["bytes"].as_s)
-                            k = JSON.parse(String.new(i))
-                            ch.send(k)
+                http do |http|
+                    http.post(
+                        path: "/model/#{model_id}/invoke-with-response-stream",
+                        headers: headers,
+                        body: body
+                    ) do |response|
+                        spawn do
+                            until response.body_io.closed?
+                                message = EventStream.next_from_io(response.body_io)
+                                ch.send(generic_event_to_bedrock_event(message))
+                            end
+                            ch.close
                         end
-                        ch.close
                     end
                 end
                 ch
             end
-
-
+        end
     end
-end
 end

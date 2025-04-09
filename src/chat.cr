@@ -39,7 +39,6 @@ module Chat
           previous_role = Role::USER
         end
       end
-
       roles
     end
 
@@ -49,6 +48,27 @@ module Chat
       end.reduce(Persona::PersonaFragment.zero_persona) do |acc, fragment|
         acc.merge_on_top_of(fragment)
       end
+    end
+
+    def conversation_blocks
+      conversation = [] of {String, String}
+      current_role = nil
+      current_text = ""
+
+      @blocks.zip(@roles).each do |block, role|
+        next if role == Role::META || block.content.strip.empty?
+
+        if role == current_role
+          current_text += " " + block.content.strip
+        else
+          conversation << {current_role, current_text} if current_role
+          current_role = role
+          current_text = block.content.strip
+        end
+      end
+
+      conversation << {current_role, current_text} if current_role
+      conversation
     end
 
     def last_block_persona(default_params : Persona::PersonaFragment, persona_config : Persona::PersonaConfig)

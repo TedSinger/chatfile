@@ -24,16 +24,27 @@ module Bedrock
         }
     )
 
+    def self.generic_role_to_bedrock_role(role : String) : String
+        case role
+        when "user"
+            "user"
+        when "ai"
+            "assistant"
+        else
+            raise "Unknown role: #{role}"
+        end
+    end
+
     def self.bedrock_api_complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
         # cfg = AWS::Config.new
         persona = chat.last_block_persona(DEFAULT_BEDROCK_PARAMS, persona_config)
         bedrock_conversation = BedrockConversation.new(chat, persona_config)
         conversation_body = JSON.build do |json|
             json.object do
-                json.field("messages", chat.blocks.map { |block|
+                json.field("messages", chat.conversation_blocks.map { |role, content|
                     {
-                        "role" => block.persona_line.keywords.includes?("user") ? "user" : "assistant",
-                        "content" => [{"type" => "text", "text" => block.content.strip}]
+                        "role" => generic_role_to_bedrock_role(role),
+                        "content" => [{"type" => "text", "text" => content}]
                     }
                 })
                 json.field("max_tokens", (persona.key_value_pairs["max_tokens"]).to_i)

@@ -56,7 +56,6 @@ module Bedrock
                 json.field("system", persona.prompt)
             end
         end
-        puts conversation_body
 
         client = AWS::BedrockRuntime::Client.new
         response_ch = client.invoke_model_with_response_stream(

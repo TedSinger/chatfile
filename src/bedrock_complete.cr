@@ -2,7 +2,21 @@ require "./chat"
 require "./persona"
 require "./bedrock_api"
 
-module Bedrock
+module BedrockComplete
+
+    def self.can_access() : Bool
+        # if ENV["AWS_ACCESS_KEY"]
+        #     ENV["AWS_ACCESS_KEY_ID"] = ENV["AWS_ACCESS_KEY"]
+        # end
+        # if ENV["AWS_SECRET_ACCESS_KEY"]
+        #     ENV["AWS_SECFET_ACCESS_KEY_ID"] = ENV["AWS_SECRET_ACCESS_KEY"]
+        # end
+        if ENV["AWS_ACCESS_KEY_ID"] && ENV["AWS_SECRET_ACCESS_KEY"]
+            true
+        else
+            false
+        end
+    end
 
     class BedrockConversation
         def initialize(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
@@ -71,8 +85,6 @@ module Bedrock
         output_ch = Channel(String).new
         spawn do
             while event = response_ch.receive?
-                # puts event
-
                 case event["type"]
                 when "content_block_delta"
                     output_ch.send(event["delta"]["text"].as_s)

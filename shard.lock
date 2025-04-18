@@ -1,8 +1,8 @@
 version: 2.0
 shards:
   aws:
-    git: https://github.com/jgaskins/aws.git
-    version: 0.1.0+git.commit.69ff77cd628971b05459449fd86dc884f600939e
+    git: https://github.com/tedsinger/crystal-aws.git
+    version: 0.1.0+git.commit.f6cc6670a4b792cd94708d692c26e9a6688efd92
 
   awscr-signer:
     git: https://github.com/taylorfinnell/awscr-signer.git

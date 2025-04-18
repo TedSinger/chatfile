@@ -1,6 +1,7 @@
+require "aws/bedrock"
+
 require "./chat"
 require "./persona"
-require "./bedrock_api"
 
 module BedrockComplete
 
@@ -53,6 +54,7 @@ module BedrockComplete
         # cfg = AWS::Config.new
         persona = chat.last_block_persona(DEFAULT_BEDROCK_PARAMS, persona_config)
         bedrock_conversation = BedrockConversation.new(chat, persona_config)
+        puts chat.conversation_blocks
         conversation_body = JSON.build do |json|
             json.object do
                 json.field("messages", chat.conversation_blocks.map { |role, content|
@@ -93,9 +95,9 @@ module BedrockComplete
                 when "error"
                     raise "Error: #{event["error"]}"
                 when "content_block_start"
-                    # puts event
+                    puts event
                 when "message_start"
-                    # puts event
+                    puts event
                 when "message_delta"
                     break
                 when "message_stop"

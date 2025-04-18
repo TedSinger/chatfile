@@ -14,4 +14,4 @@ license: MIT
 
 dependencies:
   aws:
-    github: jgaskins/aws
+    github: TedSinger/crystal-aws

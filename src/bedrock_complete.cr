@@ -6,12 +6,6 @@ require "./persona"
 module BedrockComplete
 
     def self.can_access() : Bool
-        # if ENV["AWS_ACCESS_KEY"]
-        #     ENV["AWS_ACCESS_KEY_ID"] = ENV["AWS_ACCESS_KEY"]
-        # end
-        # if ENV["AWS_SECRET_ACCESS_KEY"]
-        #     ENV["AWS_SECFET_ACCESS_KEY_ID"] = ENV["AWS_SECRET_ACCESS_KEY"]
-        # end
         if ENV["AWS_ACCESS_KEY_ID"] && ENV["AWS_SECRET_ACCESS_KEY"]
             true
         else
@@ -51,7 +45,6 @@ module BedrockComplete
     end
 
     def self.bedrock_api_complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
-        # cfg = AWS::Config.new
         persona = chat.last_block_persona(DEFAULT_BEDROCK_PARAMS, persona_config)
         bedrock_conversation = BedrockConversation.new(chat, persona_config)
         puts chat.conversation_blocks
@@ -76,13 +69,7 @@ module BedrockComplete
         client = AWS::BedrockRuntime::Client.new
         response_ch = client.invoke_model_with_response_stream(
             persona.key_value_pairs["model"],
-            conversation_body,
-            "application/json",
-            "application/json",
-            nil,
-            nil,
-            nil,
-            nil
+            conversation_body
         )
         output_ch = Channel(String).new
         spawn do

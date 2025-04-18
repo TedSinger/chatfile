@@ -1,5 +1,4 @@
 require "aws/bedrock"
-
 require "./chat"
 require "./persona"
 
@@ -44,6 +43,27 @@ module BedrockComplete
         end
     end
 
+    def self.extract_event_from_bedrock_response(event : JSON::Any) : String|Iterator::Stop|Nil
+        case event["type"]
+        when "content_block_delta"
+            event["delta"]["text"].as_s
+        when "content_block_stop"
+            Iterator::Stop.new
+        when "error"
+            raise "Error: #{event["error"]}"
+        when "content_block_start"
+            puts event
+        when "message_start"
+            puts event
+        when "message_delta"
+            Iterator::Stop.new
+        when "message_stop"
+            Iterator::Stop.new
+        else
+            raise "Unknown event type: #{event["type"]}"
+        end
+    end
+    
     def self.bedrock_api_complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
         persona = chat.last_block_persona(DEFAULT_BEDROCK_PARAMS, persona_config)
         bedrock_conversation = BedrockConversation.new(chat, persona_config)
@@ -67,35 +87,11 @@ module BedrockComplete
         end
 
         client = AWS::BedrockRuntime::Client.new
-        response_ch = client.invoke_model_with_response_stream(
+        response_iter = client.invoke_model_with_response_stream(
             persona.key_value_pairs["model"],
             conversation_body
         )
-        output_ch = Channel(String).new
-        spawn do
-            while event = response_ch.receive?
-                case event["type"]
-                when "content_block_delta"
-                    output_ch.send(event["delta"]["text"].as_s)
-                when "content_block_stop"
-                    break
-                when "error"
-                    raise "Error: #{event["error"]}"
-                when "content_block_start"
-                    puts event
-                when "message_start"
-                    puts event
-                when "message_delta"
-                    break
-                when "message_stop"
-                    break
-                else
-                    raise "Unknown event type: #{event["type"]}"
-                end
-            end
-            output_ch.close
-        end
-        output_ch
+        response_iter.compact_map { |event| extract_event_from_bedrock_response(event) }
     end                
 
 end

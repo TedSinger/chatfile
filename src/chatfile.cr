@@ -20,9 +20,11 @@ JSON
 persona_config = Persona.parse_persona_config(persona_json)
 
 if BedrockComplete.can_access
+  puts "Using Bedrock"
   chunks = BedrockComplete.bedrock_api_complete(chat, persona_config)
-elsif OpenRouterComplete.can_access
-  chunks = OpenRouterComplete.openrouter_api_complete(chat, persona_config)
+# elsif OpenRouterComplete.can_access
+  # puts "Using OpenRouter"
+  # chunks = OpenRouterComplete.openrouter_api_complete(chat, persona_config)
 else
   raise "No access to OpenRouter or Bedrock"
 end
@@ -34,9 +36,7 @@ File.open("foo.chat", "a") do |file|
     file.print("#% ai\n")
     file.flush
   end
-  loop do
-    chunk = chunks.receive?
-    break if chunk == nil
+  chunks.each do |chunk|
     file.print(chunk)
     file.flush
   end

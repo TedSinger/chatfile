@@ -71,12 +71,14 @@ module Chat
       conversation
     end
 
-    def last_block_persona(default_params : Persona::PersonaFragment, persona_config : Persona::PersonaConfig)
+    def last_block_persona(provider_default_params : Persona::PersonaFragment, persona_config : Persona::PersonaConfig)
       block_persona, block_fragment = @blocks[-1].persona_line.to_persona_and_fragment(persona_config)
     
       meta_fragment = fragment_from_meta_blocks(persona_config)
+      # FIXME: model might be configured by the block persona (Explicitly or through the character)
+      model_config_params = persona_config[provider_default_params.key_value_pairs["model"]] || Persona::PersonaFragment.zero_persona
       default_persona = persona_config["default"] || Persona::PersonaFragment.zero_persona
-      block_fragment.merge_on_top_of(meta_fragment).merge_on_top_of(block_persona).merge_on_top_of(default_persona).merge_on_top_of(default_params)
+      block_fragment.merge_on_top_of(meta_fragment).merge_on_top_of(block_persona).merge_on_top_of(default_persona).merge_on_top_of(model_config_params).merge_on_top_of(provider_default_params)
     end
   end
 end

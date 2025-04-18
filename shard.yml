@@ -13,11 +13,5 @@ crystal: '>= 1.15.1'
 license: MIT
 
 dependencies:
-  openai:
-    github: spider-gazelle/crystal-openai
-  
-  anthropic:
-    github: jgaskins/anthropic
-  
   aws:
     github: jgaskins/aws

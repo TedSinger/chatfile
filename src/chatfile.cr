@@ -1,8 +1,8 @@
 require "./block"
 require "./persona"
-require "./bedrock"
+require "./bedrock_complete"
 require "./chat"
-require "./openai_complete"
+require "./openrouter_complete"
 
 module Chatfile
 end
@@ -19,20 +19,30 @@ persona_json = <<-JSON
 JSON
 persona_config = Persona.parse_persona_config(persona_json)
 
-
-chunks = OpenAIComplete.openai_api_complete(chat, persona_config)
+if BedrockComplete.can_access
+  chunks = BedrockComplete.bedrock_api_complete(chat, persona_config)
+elsif OpenRouterComplete.can_access
+  chunks = OpenRouterComplete.openrouter_api_complete(chat, persona_config)
+else
+  raise "No access to OpenRouter or Bedrock"
+end
 File.open("foo.chat", "a") do |file|
+  if !text.ends_with?("\n")
+    file.print("\n")
+  end
   if !chat.blocks[-1].content.strip.empty?
-    file.print("\n#% ai\n")
+    file.print("#% ai\n")
     file.flush
   end
   loop do
     chunk = chunks.receive?
     break if chunk == nil
-    print chunk
     file.print(chunk)
     file.flush
   end
-  file.print("\n#% user\n")
+  if !chat.blocks[-1].content.ends_with?("\n")
+    file.print("\n")
+  end
+  file.print("#% user\n")
   file.flush
 end

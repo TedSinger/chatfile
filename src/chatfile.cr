@@ -1,3 +1,4 @@
+require "option_parser"
 require "./block"
 require "./persona"
 require "./bedrock_complete"
@@ -9,40 +10,60 @@ end
 
 VERSION = "0.1.0"
 
-text = File.read("foo.chat")
+def process_chat_file(filename : String)
+  text = File.read(filename)
+  blocks = Block.blocks_from_text(text)
+  chat = Chat::Chat.new(blocks)
+  persona_config = Persona.default_config
 
-blocks = Block.blocks_from_text(text)
+  chunks = if OpenRouterComplete.can_access
+    puts "Using OpenRouter"
+    OpenRouterComplete.openrouter_api_complete(chat, persona_config)
+  elsif BedrockComplete.can_access
+    puts "Using Bedrock" 
+    BedrockComplete.bedrock_api_complete(chat, persona_config)
+  else
+    raise "No access to OpenRouter or Bedrock"
+  end
 
-chat = Chat::Chat.new(blocks)
-persona_json = <<-JSON
-{"default":{"prompt":"You are a helpful, but locanic, succinct, and terse assistant.", "max_tokens":"100","temperature":"0.5"}}
-JSON
-persona_config = Persona.parse_persona_config(persona_json)
+  File.open(filename, "a") do |file|
+    file.print("\n") unless text.ends_with?("\n")
+    
+    if !chat.blocks[-1].content.strip.empty?
+      file.print("#% ai\n")
+      file.flush
+    end
 
-if BedrockComplete.can_access
-  puts "Using Bedrock"
-  chunks = BedrockComplete.bedrock_api_complete(chat, persona_config)
-# elsif OpenRouterComplete.can_access
-  # puts "Using OpenRouter"
-  # chunks = OpenRouterComplete.openrouter_api_complete(chat, persona_config)
-else
-  raise "No access to OpenRouter or Bedrock"
+    chunks.each do |chunk|
+      file.print(chunk)
+      file.flush
+    end
+
+    file.print("\n") unless chat.blocks[-1].content.ends_with?("\n")
+    file.print("#% user\n")
+    file.flush
+  end
 end
-File.open("foo.chat", "a") do |file|
-  if !text.ends_with?("\n")
-    file.print("\n")
+
+# Parse command line arguments
+OptionParser.parse do |parser|
+  parser.banner = "Usage: chatfile [arguments] <filename>"
+
+  parser.on("-v", "--version", "Show version") do
+    puts "Chatfile version #{VERSION}"
+    exit
   end
-  if !chat.blocks[-1].content.strip.empty?
-    file.print("#% ai\n")
-    file.flush
+
+  parser.on("-h", "--help", "Show this help") do
+    puts parser
+    exit
   end
-  chunks.each do |chunk|
-    file.print(chunk)
-    file.flush
+
+  parser.unknown_args do |args|
+    if args.empty?
+      puts parser
+      exit(1)
+    end
+    process_chat_file(args[0])
   end
-  if !chat.blocks[-1].content.ends_with?("\n")
-    file.print("\n")
-  end
-  file.print("#% user\n")
-  file.flush
 end

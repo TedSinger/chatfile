@@ -1,4 +1,5 @@
 require "aws/bedrock"
+require "aws/bedrock_events"
 require "./chat"
 require "./persona"
 
@@ -43,24 +44,25 @@ module BedrockComplete
         end
     end
 
-    def self.extract_event_from_bedrock_response(event : JSON::Any) : String|Iterator::Stop|Nil
-        case event["type"]
-        when "content_block_delta"
-            event["delta"]["text"].as_s
-        when "content_block_stop"
+    def self.extract_event_from_bedrock_response(event : AWS::BedrockRuntime::BedrockRuntimeEvent) : String|Iterator::Stop|Nil
+        puts event
+        case event
+        when AWS::BedrockRuntime::BedrockRuntimeEvent::ContentBlockDelta
+            event.delta.text
+        when AWS::BedrockRuntime::BedrockRuntimeEvent::ContentBlockStop
             Iterator::Stop.new
-        when "error"
-            raise "Error: #{event["error"]}"
-        when "content_block_start"
-            puts event
-        when "message_start"
-            puts event
-        when "message_delta"
-            Iterator::Stop.new
-        when "message_stop"
-            Iterator::Stop.new
+        when AWS::BedrockRuntime::BedrockRuntimeEvent::ContentBlockStart
+            # puts event
+            nil
+        when AWS::BedrockRuntime::BedrockRuntimeEvent::MessageStart
+            # puts event
+            nil
+        # when AWS::BedrockRuntime::BedrockRuntimeEvent::MessageDelta
+        #     Iterator::Stop.new
+        # when AWS::BedrockRuntime::BedrockRuntimeEvent::MessageStop
+        #     Iterator::Stop.new
         else
-            raise "Unknown event type: #{event["type"]}"
+            raise "Unknown event type: #{event.class}"
         end
     end
     

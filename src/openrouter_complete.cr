@@ -80,9 +80,14 @@ module OpenRouterComplete
     conversation_body = JSON.build do |json|
       json.object do
         json.field("model", persona.key_value_pairs["model"])
-        json.field("messages", chat.conversation_blocks.map { |role, content|
-          {"role" => generic_role_to_openrouter_role(role), "content" => content}
-        })
+        json.field("messages",
+          [
+            {"role" => "system", "content" => persona.prompt},
+            *chat.conversation_blocks.map { |role, content|
+              {"role" => generic_role_to_openrouter_role(role), "content" => content}
+            }
+          ]
+        )
         json.field("stream", true)
       end
     end

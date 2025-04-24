@@ -72,6 +72,21 @@ module Persona
     PersonaConfig.new(personas)
   end
 
+  def self.default_path
+    File.expand_path("~/.config/chatfile/personas.json")
+  end
+
+  def self.default_config
+    if File.exists?(self.default_path)
+      self.parse_persona_config(File.read(default_path))
+    else
+      self.parse_persona_config(<<-JSON
+        {"default":{"prompt":"You are a helpful, but laconic, succinct, and terse assistant.", "max_tokens":"100","temperature":"0.5"}}
+      JSON
+      )
+    end
+  end
+
   struct PersonaLine
     getter keywords : Array(String)
     getter key_value_pairs : Hash(String, String)

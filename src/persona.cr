@@ -57,6 +57,10 @@ module Persona
     def [](name : String) : Persona | Nil
       @config[name]? || @config.values.find { |persona| persona.name.split('_').join.upcase == name.upcase }
     end
+
+    def merge_on_top_of(other : PersonaConfig)
+      PersonaConfig.new(@config.merge(other.config))
+    end
   end
 
   def self.parse_persona_config(config_json : String)
@@ -73,17 +77,19 @@ module Persona
   end
 
   def self.default_path
-    File.expand_path("~/.config/chatfile/personas.json")
+    File.expand_path("~/.config/chatfile/personas.json", home:Path.home)
   end
 
   def self.default_config
+    default = self.parse_persona_config(<<-JSON
+      {"default":{"prompt":"You are a helpful, but laconic, succinct, and terse assistant.", "max_tokens":"100","temperature":"0.5"}}
+    JSON
+    )
     if File.exists?(self.default_path)
-      self.parse_persona_config(File.read(default_path))
+      from_cfg = self.parse_persona_config(File.read(self.default_path))
+      from_cfg.merge_on_top_of(default)
     else
-      self.parse_persona_config(<<-JSON
-        {"default":{"prompt":"You are a helpful, but laconic, succinct, and terse assistant.", "max_tokens":"100","temperature":"0.5"}}
-      JSON
-      )
+      default
     end
   end
 

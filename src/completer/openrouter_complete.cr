@@ -1,6 +1,41 @@
 require "http/client"
+require "./completer"
 
-module OpenRouterComplete
+module Completer::OpenRouterComplete
+  class OpenRouterCompleter < Completer
+    def initialize(env : Hash(String, String))
+      @env = env
+    end
+
+    def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
+      client = HTTP::Client.new(URI.new("https", "openrouter.ai"))
+      conversation = OpenRouterConversation.new(chat, persona_config)
+      persona = chat.last_block_persona(DEFAULT_OPENROUTER_PARAMS, persona_config)
+      conversation_body = JSON.build do |json|
+        json.object do
+          json.field("model", persona.key_value_pairs["model"])
+          json.field("messages",
+            [
+              {"role" => "system", "content" => persona.prompt},
+              *chat.conversation_blocks.map { |role, content|
+                {"role" => OpenRouterComplete.generic_role_to_openrouter_role(role), "content" => content}
+              },
+            ]
+          )
+          json.field("stream", true)
+        end
+      end
+
+      headers = HTTP::Headers.new
+      headers.add("Authorization", "Bearer #{@env["OPENROUTER_API_KEY"]}")
+      headers.add("Content-Type", "application/json")
+
+      client.post("/api/v1/chat/completions", headers, conversation_body) do |response|
+        return EventStream.new(response.body_io)
+      end
+    end
+  end
+
   def self.can_access : Bool
     if ENV["OPENROUTER_API_KEY"]
       true
@@ -71,33 +106,5 @@ module OpenRouterComplete
       end
       chunk
     end
-  end
-
-  def self.openrouter_api_complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
-    client = HTTP::Client.new(URI.new("https", "openrouter.ai"))
-    conversation = OpenRouterConversation.new(chat, persona_config)
-    persona = chat.last_block_persona(DEFAULT_OPENROUTER_PARAMS, persona_config)
-    conversation_body = JSON.build do |json|
-      json.object do
-        json.field("model", persona.key_value_pairs["model"])
-        json.field("messages",
-          [
-            {"role" => "system", "content" => persona.prompt},
-            *chat.conversation_blocks.map { |role, content|
-              {"role" => generic_role_to_openrouter_role(role), "content" => content}
-            }
-          ]
-        )
-        json.field("stream", true)
-      end
-    end
-    headers = HTTP::Headers.new
-    headers.add("Authorization", "Bearer #{ENV["OPENROUTER_API_KEY"]}")
-    headers.add("Content-Type", "application/json")
-    
-    client.post("/api/v1/chat/completions", headers, conversation_body) do |response|
-      return EventStream.new(response.body_io)
-    end
-    
   end
 end

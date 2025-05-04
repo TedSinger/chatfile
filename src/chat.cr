@@ -73,7 +73,7 @@ module Chat
 
     def last_block_persona(provider_default_params : Persona::PersonaFragment, persona_config : Persona::PersonaConfig)
       block_persona, block_fragment = @blocks[-1].persona_line.to_persona_and_fragment(persona_config)
-    
+
       meta_fragment = fragment_from_meta_blocks(persona_config)
       # FIXME: model might be configured by the block persona (Explicitly or through the character)
       model_config_params = persona_config[provider_default_params.key_value_pairs["model"]] || Persona::PersonaFragment.zero_persona
@@ -86,5 +86,5 @@ end
 module Role
   USER = "user"
   META = "meta"
-  AI = "ai"
+  AI   = "ai"
 end

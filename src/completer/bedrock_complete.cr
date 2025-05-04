@@ -12,8 +12,7 @@ module Completer::BedrockComplete
 
     def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
       persona = chat.last_block_persona(DEFAULT_BEDROCK_PARAMS, persona_config)
-      bedrock_conversation = BedrockConversation.new(chat, persona_config)
-      puts chat.conversation_blocks
+
       conversation_body = JSON.build do |json|
         json.object do
           json.field("messages", chat.conversation_blocks.map { |role, content|
@@ -53,13 +52,6 @@ module Completer::BedrockComplete
     end
   end
 
-  class BedrockConversation
-    def initialize(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
-      @chat = chat
-      @persona_config = persona_config
-    end
-  end
-
   DEFAULT_BEDROCK_PARAMS = Persona::PersonaFragment.new(
     nil,
     nil,
@@ -87,14 +79,21 @@ module Completer::BedrockComplete
 
   def self.extract_event_from_bedrock_response(event : AWS::BedrockRuntime::BedrockRuntimeEvent) : String | Iterator::Stop | Nil
     case event
+    when AWS::BedrockRuntime::BedrockRuntimeEvent::ContentBlockStart
+      event.content_block.text
     when AWS::BedrockRuntime::BedrockRuntimeEvent::ContentBlockDelta
       event.delta.text
     when AWS::BedrockRuntime::BedrockRuntimeEvent::ContentBlockStop
       nil
+    when AWS::BedrockRuntime::BedrockRuntimeEvent::MessageStart
+      nil
     else
-      puts event.to_json
-      if JSON.parse(event.to_json).as_h.has_key?("message")
-        puts event["message"].as_h["role"]
+      if event["type"] == "message_stop"
+        nil
+      elsif event["type"] == "message_delta"
+        nil # usually a stop_reason?
+      else
+        event.to_json
       end
     end
   end

@@ -1,10 +1,11 @@
 require "json"
+
 module Persona
   struct PersonaFragment
     getter name : String | Nil
     getter prompt : String | Nil
     getter key_value_pairs : Hash(String, String)
-    
+
     def initialize(name : String | Nil, prompt : String | Nil, key_value_pairs : Hash(String, String))
       @name = name
       @prompt = prompt
@@ -18,7 +19,7 @@ module Persona
         @key_value_pairs.merge(other.key_value_pairs)
       )
     end
-  
+
     def self.zero_persona
       PersonaFragment.new(
         nil,
@@ -32,7 +33,7 @@ module Persona
     getter name : String
     getter prompt : String
     getter key_value_pairs : Hash(String, String)
-    
+
     def initialize(name : String, prompt : String, key_value_pairs : Hash(String, String))
       @name = name
       @prompt = prompt
@@ -47,6 +48,7 @@ module Persona
       )
     end
   end
+
   struct PersonaConfig
     getter config : Hash(String, Persona)
 
@@ -77,7 +79,7 @@ module Persona
   end
 
   def self.default_path
-    File.expand_path("~/.config/chatfile/personas.json", home:Path.home)
+    File.expand_path("~/.config/chatfile/personas.json", home: Path.home)
   end
 
   def self.default_config
@@ -96,7 +98,7 @@ module Persona
   struct PersonaLine
     getter keywords : Array(String)
     getter key_value_pairs : Hash(String, String)
-    
+
     def initialize(keywords : Array(String), key_value_pairs : Hash(String, String))
       @keywords = keywords
       @key_value_pairs = key_value_pairs
@@ -119,7 +121,6 @@ module Persona
       {persona, fragment}
     end
   end
-    
 
   def self.is_persona_line(line)
     line.starts_with?("#%")

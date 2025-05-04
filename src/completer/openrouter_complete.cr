@@ -9,7 +9,6 @@ module Completer::OpenRouterComplete
 
     def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
       client = HTTP::Client.new(URI.new("https", "openrouter.ai"))
-      conversation = OpenRouterConversation.new(chat, persona_config)
       persona = chat.last_block_persona(DEFAULT_OPENROUTER_PARAMS, persona_config)
       conversation_body = JSON.build do |json|
         json.object do
@@ -41,13 +40,6 @@ module Completer::OpenRouterComplete
       true
     else
       false
-    end
-  end
-
-  class OpenRouterConversation
-    def initialize(chat : Chat::Chat, persona_config : Persona::PersonaConfig)
-      @chat = chat
-      @persona_config = persona_config
     end
   end
 

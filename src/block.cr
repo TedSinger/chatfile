@@ -1,4 +1,5 @@
 require "./persona"
+
 module Block
   struct Block
     getter persona_line : Persona::PersonaLine
@@ -7,14 +8,14 @@ module Block
     def initialize(persona_line : Persona::PersonaLine, content : String)
       @persona_line = persona_line
       @content = content
-    end   
+    end
   end
-  
+
   def self.blocks_from_text(text : String)
     blocks = [] of Block
     current_block_text = ""
     current_persona_line = nil
-  
+
     text.each_line do |line|
       if Persona.is_persona_line(line)
         if current_persona_line

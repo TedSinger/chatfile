@@ -3,7 +3,7 @@ require "aws/bedrock_events"
 require "./completer"
 require "../chat"
 require "../persona"
-
+require "./aws_creds"
 module Completer::BedrockComplete
   class BedrockCompleter < Completer
     def initialize(credentials : Hash(String, String))
@@ -34,7 +34,8 @@ module Completer::BedrockComplete
       client = AWS::BedrockRuntime::Client.new(
         @credentials["AWS_ACCESS_KEY_ID"],
         @credentials["AWS_SECRET_ACCESS_KEY"],
-        @credentials["AWS_REGION"]
+        @credentials["AWS_REGION"]? || ENV["AWS_DEFAULT_REGION"],
+        @credentials["AWS_SESSION_TOKEN"]?
       )
       response_iter = client.invoke_model_with_response_stream(
         persona.key_value_pairs["model"],
@@ -44,13 +45,6 @@ module Completer::BedrockComplete
     end
   end
 
-  def self.can_access : Bool
-    if ENV["AWS_ACCESS_KEY_ID"] && ENV["AWS_SECRET_ACCESS_KEY"]
-      true
-    else
-      false
-    end
-  end
 
   DEFAULT_BEDROCK_PARAMS = Persona::PersonaFragment.new(
     nil,

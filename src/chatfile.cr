@@ -5,7 +5,7 @@ require "./completer/bedrock_complete"
 require "./completer/openrouter_complete"
 require "./chat"
 require "./completer/completer"
-
+require "./completer/aws_creds"
 module Chatfile
 end
 
@@ -15,18 +15,7 @@ def get_completer(aws_credentials_command : String?, use_bedrock : Bool, use_ope
   # first check for an explicit flag
   if use_bedrock
     puts "Using Bedrock because of --bedrock flag"
-    return Completer::BedrockComplete::BedrockCompleter.new(env)
-  elsif aws_credentials_command
-    puts "Using Bedrock because of --aws-credentials-command flag"
-    credentials_bytes = `#{aws_credentials_command}`.to_s
-    puts credentials_bytes
-    credentials_hash = JSON.parse(credentials_bytes).as_h
-    credentials = {
-      "AWS_ACCESS_KEY_ID"     => credentials_hash["AWS_ACCESS_KEY_ID"].as_s,
-      "AWS_SECRET_ACCESS_KEY" => credentials_hash["AWS_SECRET_ACCESS_KEY"].as_s,
-      "AWS_REGION"            => credentials_hash["AWS_REGION"].as_s,
-    }
-    return Completer::BedrockComplete::BedrockCompleter.new(credentials)
+    return Completer::BedrockComplete::BedrockCompleter.new(Completer::AwsCreds.get_credentials)
   elsif use_openrouter
     puts "Using OpenRouter because of --openrouter flag"
     return Completer::OpenRouterComplete::OpenRouterCompleter.new(env)
@@ -34,9 +23,9 @@ def get_completer(aws_credentials_command : String?, use_bedrock : Bool, use_ope
   elsif Completer::OpenRouterComplete.can_access
     puts "Using OpenRouter because of .can_access"
     return Completer::OpenRouterComplete::OpenRouterCompleter.new(env)
-  elsif Completer::BedrockComplete.can_access
+  elsif Completer::AwsCreds.can_access
     puts "Using Bedrock because of .can_access"
-    return Completer::BedrockComplete::BedrockCompleter.new(env)
+    return Completer::BedrockComplete::BedrockCompleter.new(Completer::AwsCreds.get_credentials)
   else
     raise "No access to OpenRouter or Bedrock"
   end

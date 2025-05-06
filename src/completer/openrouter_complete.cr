@@ -36,7 +36,7 @@ module Completer::OpenRouterComplete
   end
 
   def self.can_access : Bool
-    if ENV["OPENROUTER_API_KEY"]
+    if ENV.has_key?("OPENROUTER_API_KEY")
       true
     else
       false

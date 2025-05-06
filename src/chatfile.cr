@@ -11,7 +11,7 @@ end
 
 VERSION = "0.1.0"
 
-def get_completer(aws_credentials_command : String?, use_bedrock : Bool, use_openrouter : Bool, env : Hash(String, String)) : Completer::Completer
+def get_completer(use_bedrock : Bool, use_openrouter : Bool, env : Hash(String, String)) : Completer::Completer
   # first check for an explicit flag
   if use_bedrock
     puts "Using Bedrock because of --bedrock flag"
@@ -70,11 +70,6 @@ OptionParser.parse do |parser|
     puts parser
     exit
   end
-  aws_credentials_command = nil
-  parser.on("--aws-credentials-command=", "Shell command returning json") do |command|
-    aws_credentials_command = command
-  end
-
   use_bedrock = false
   parser.on("--bedrock", "Use Bedrock") do
     use_bedrock = true
@@ -90,7 +85,7 @@ OptionParser.parse do |parser|
       puts parser
       exit(1)
     end
-    completer = get_completer(aws_credentials_command, use_bedrock, use_openrouter, ENV.to_h)
+    completer = get_completer(use_bedrock, use_openrouter, ENV.to_h)
     process_chat_file(args[0], completer)
   end
 end

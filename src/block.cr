@@ -2,10 +2,10 @@ require "./persona"
 
 module Block
   struct Block
-    getter persona_line : Persona::PersonaLine
+    getter persona_line : String
     getter content : String
 
-    def initialize(persona_line : Persona::PersonaLine, content : String)
+    def initialize(persona_line : String, content : String)
       @persona_line = persona_line
       @content = content
     end
@@ -17,14 +17,14 @@ module Block
     current_persona_line = nil
 
     text.each_line do |line|
-      if Persona.is_persona_line(line)
+      if Persona::PersonaLine.is_persona_line(line)
         if current_persona_line
           blocks << Block.new(current_persona_line, current_block_text)
         else
-          blocks << Block.new(Persona::PersonaLine.new([] of String, {} of String => String), current_block_text)
+          blocks << Block.new("#% meta", current_block_text)
         end
         current_block_text = ""
-        current_persona_line = Persona.parse_persona_line(line)
+        current_persona_line = line
       else
         current_block_text += line
       end

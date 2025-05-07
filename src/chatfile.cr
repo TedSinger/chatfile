@@ -6,6 +6,7 @@ require "./completer/openrouter_complete"
 require "./chat"
 require "./completer/completer"
 require "./completer/aws_creds"
+
 module Chatfile
 end
 
@@ -35,7 +36,7 @@ def process_chat_file(filename : String, completer : Completer::Completer)
   text = File.read(filename)
   blocks = Block.blocks_from_text(text)
   chat = Chat::Chat.new(blocks)
-  persona_config = Persona.default_config
+  persona_config = Persona::PersonaConfig.default_config
 
   chunks = completer.complete(chat, persona_config)
 

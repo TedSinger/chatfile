@@ -9,19 +9,28 @@ module Completer::OpenRouterComplete
 
     def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
       client = HTTP::Client.new(URI.new("https", "openrouter.ai"))
-      persona = chat.last_block_persona(DEFAULT_OPENROUTER_PARAMS, persona_config)
+      persona = chat.last_block_persona("openrouter", persona_config)
+      puts persona
       conversation_body = JSON.build do |json|
         json.object do
           json.field("model", persona.key_value_pairs["model"])
           json.field("messages",
             [
-              {"role" => "system", "content" => persona.prompt},
+              {"role" => "system", "content" => persona.key_value_pairs["prompt"]},
               *chat.conversation_blocks.map { |role, content|
                 {"role" => OpenRouterComplete.generic_role_to_openrouter_role(role), "content" => content}
               },
             ]
           )
           json.field("stream", true)
+          json.field("temperature", persona.key_value_pairs["temperature"].to_f)
+          json.field("max_tokens", persona.key_value_pairs["max_tokens"].to_i)
+          json.field("top_p", persona.key_value_pairs["top_p"].to_f)
+          json.field("top_k", persona.key_value_pairs["top_k"].to_i)
+          json.field("frequency_penalty", persona.key_value_pairs["frequency_penalty"].to_f)
+          json.field("presence_penalty", persona.key_value_pairs["presence_penalty"].to_f)
+          json.field("min_p", persona.key_value_pairs["min_p"].to_f)
+          json.field("repetition_penalty", persona.key_value_pairs["repetition_penalty"].to_f)
         end
       end
 
@@ -30,7 +39,11 @@ module Completer::OpenRouterComplete
       headers.add("Content-Type", "application/json")
 
       client.post("/api/v1/chat/completions", headers, conversation_body) do |response|
-        return EventStream.new(response.body_io)
+        if response.status_code == 200
+          return EventStream.new(response.body_io)
+        else
+          raise "Failed to complete: #{response.status_code}"
+        end
       end
     end
   end
@@ -42,14 +55,6 @@ module Completer::OpenRouterComplete
       false
     end
   end
-
-  DEFAULT_OPENROUTER_PARAMS = Persona::PersonaFragment.new(
-    nil,
-    nil,
-    {
-      "model" => "x-ai/grok-2-1212",
-    }
-  )
 
   def self.generic_role_to_openrouter_role(role : String) : String
     case role

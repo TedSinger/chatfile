@@ -167,7 +167,12 @@ module Persona
       JSON
       )
       if File.exists?(self.default_path)
-        default << self.from_json(File.read(self.default_path))
+        begin
+          default << self.from_json(File.read(self.default_path))
+        rescue e
+          puts "Error parsing default config: #{e}"
+          default
+        end
       else
         default
       end

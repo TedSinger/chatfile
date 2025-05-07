@@ -47,7 +47,7 @@ module Chat
       meta_blocks.map do |block, role|
         Persona::PersonaLine.parse_persona_line(block.persona_line)
       end.reduce(Persona::PersonaLine.zero) do |acc, persona|
-        persona << acc
+        acc << persona
       end
     end
 
@@ -78,7 +78,7 @@ module Chat
       meta_persona_line = persona_line_from_meta_blocks()
       block_persona_line = Persona::PersonaLine.parse_persona_line(@blocks[-1].persona_line)
 
-      deliberate_persona = block_persona_line << meta_persona_line
+      deliberate_persona = meta_persona_line << block_persona_line
       default_persona << deliberate_persona.resolve(config)
     end
   end

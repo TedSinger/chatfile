@@ -124,8 +124,8 @@ module Persona
 
     def <<(other : PersonaConfig)
       PersonaConfig.new({
-        "shortcuts"            => @shortcuts.merge(other.shortcuts),
-        "defaults_by_provider" => @defaults_by_provider.merge(other.defaults_by_provider),
+        "shortcuts"            => @shortcuts.merge(other.shortcuts) { |_, v1, v2| v1.merge(v2) },
+        "defaults_by_provider" => @defaults_by_provider.merge(other.defaults_by_provider) { |_, v1, v2| v1.merge(v2) },
       })
     end
 

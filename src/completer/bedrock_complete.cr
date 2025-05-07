@@ -7,7 +7,7 @@ require "./aws_creds"
 
 module Completer::BedrockComplete
   class BedrockCompleter < Completer
-    def initialize(credentials : Hash(String, String))
+    def initialize(credentials : Hash(String, String | Nil))
       @credentials = credentials
     end
 
@@ -33,9 +33,9 @@ module Completer::BedrockComplete
       end
 
       client = AWS::BedrockRuntime::Client.new(
-        @credentials["AWS_ACCESS_KEY_ID"],
-        @credentials["AWS_SECRET_ACCESS_KEY"],
-        @credentials["AWS_REGION"]? || ENV["AWS_DEFAULT_REGION"],
+        @credentials["AWS_ACCESS_KEY_ID"]?.not_nil!,
+        @credentials["AWS_SECRET_ACCESS_KEY"]?.not_nil!,
+        @credentials["AWS_REGION"]?.not_nil!,
         @credentials["AWS_SESSION_TOKEN"]?
       )
       response_iter = client.invoke_model_with_response_stream(

@@ -10,12 +10,12 @@ module Completer
     end
 
     def self.get_credentials
-      ret = {} of String => String
+      ret = {} of String => String | Nil
       # add in env vars
       ret["AWS_ACCESS_KEY_ID"] = ENV.fetch("AWS_ACCESS_KEY_ID", "")
       ret["AWS_SECRET_ACCESS_KEY"] = ENV.fetch("AWS_SECRET_ACCESS_KEY", "")
       ret["AWS_REGION"] = ENV.fetch("AWS_REGION", ENV.fetch("AWS_DEFAULT_REGION", ""))
-      ret["AWS_SESSION_TOKEN"] = ENV.fetch("AWS_SESSION_TOKEN", "")
+      ret["AWS_SESSION_TOKEN"] = ENV.fetch("AWS_SESSION_TOKEN", nil)
       # add in config
       config = get_config_for_active_profile
       if config["credential_process"]?

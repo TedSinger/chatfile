@@ -152,7 +152,7 @@ module Persona
                     "stop": "[]"
                 },
                 "bedrock": {
-                    "model": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+                    "model": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
                     "prompt": "You are a helpful assistant that can answer questions and help with tasks.",
                     "temperature": "0.7",
                     "anthropic_version": "bedrock-2023-05-31",

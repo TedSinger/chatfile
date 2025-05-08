@@ -5,6 +5,7 @@ module Persona
     USER = "user"
     META = "meta"
     AI   = "ai"
+    SHELL = "shell"
   end
 
   struct Persona
@@ -70,6 +71,8 @@ module Persona
         Role::USER
       elsif @keywords.includes?(Role::META)
         Role::META
+      elsif @keywords.includes?(Role::SHELL)
+        Role::SHELL
       elsif !@keywords.empty?
         Role::AI
       else

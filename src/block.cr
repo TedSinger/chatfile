@@ -26,10 +26,10 @@ module Block
         current_block_text = ""
         current_persona_line = line
       else
-        current_block_text += line
+        current_block_text += line + "\n"
       end
     end
-    blocks << Block.new(current_persona_line, current_block_text) if current_persona_line
+    blocks << Block.new(current_persona_line, current_block_text.strip) if current_persona_line
     blocks
   end
 end

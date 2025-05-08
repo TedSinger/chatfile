@@ -26,6 +26,9 @@ module Chat
         elsif persona_line.inferred_role == Persona::Role::USER
           roles << Persona::Role::USER
           previous_role = Persona::Role::USER
+        elsif persona_line.inferred_role == Persona::Role::SHELL
+          roles << Persona::Role::SHELL
+          previous_role = Persona::Role::USER
         elsif persona_line.inferred_role == Persona::Role::META
           roles << Persona::Role::META
         elsif persona_line.inferred_role == Persona::Role::AI
@@ -63,8 +66,17 @@ module Chat
           current_text += " " + block.content.strip
         else
           conversation << {current_role, current_text} if current_role
-          current_role = role
-          current_text = block.content.strip
+          if role == Persona::Role::SHELL
+            current_role = Persona::Role::USER
+            lines = block.content.strip.split("\n")
+            current_text = lines.map do |line|
+              stdout = `#{line}`
+              "```shell\n$ #{line}\n#{stdout}\n```"
+            end.join("\n")
+          else
+            current_role = role
+            current_text = block.content.strip
+          end
         end
       end
 

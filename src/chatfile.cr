@@ -44,7 +44,7 @@ def process_chat_file(filename : String, completer : Completer::Completer)
     file.print("\n") unless text.ends_with?("\n")
 
     if !chat.blocks[-1].content.strip.empty?
-      file.print("#% ai\n")
+      file.print("#@ ai\n")
       file.flush
     end
 
@@ -54,7 +54,7 @@ def process_chat_file(filename : String, completer : Completer::Completer)
     end
 
     file.print("\n") unless chat.blocks[-1].content.ends_with?("\n")
-    file.print("#% user\n")
+    file.print("#@ user\n")
     file.flush
   end
 end

@@ -21,7 +21,7 @@ module Block
         if current_persona_line
           blocks << Block.new(current_persona_line, current_block_text)
         else
-          blocks << Block.new("#% meta", current_block_text)
+          blocks << Block.new("#@ meta", current_block_text)
         end
         current_block_text = ""
         current_persona_line = line

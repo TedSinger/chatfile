@@ -45,11 +45,11 @@ module Persona
     end
 
     def self.is_persona_line(line)
-      line.starts_with?("#%")
+      line.starts_with?("#@")
     end
 
     def self.parse_persona_line(line)
-      raise ArgumentError.new("Line must start with #%") unless line.starts_with?("#%")
+      raise ArgumentError.new("Line must start with #@") unless line.starts_with?("#@")
 
       parts = line[2..-1].strip.split(/\s+/)
       keywords = [] of String

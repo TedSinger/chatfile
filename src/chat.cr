@@ -31,6 +31,8 @@ module Chat
           previous_role = Persona::Role::USER
         elsif persona_line.inferred_role == Persona::Role::META
           roles << Persona::Role::META
+        elsif persona_line.inferred_role == Persona::Role::RESPONSE_FORMAT
+          roles << Persona::Role::RESPONSE_FORMAT
         elsif persona_line.inferred_role == Persona::Role::AI
           roles << Persona::Role::AI
           previous_role = Persona::Role::AI
@@ -60,7 +62,7 @@ module Chat
       current_text = ""
 
       @blocks.zip(@roles).each do |block, role|
-        next if role == Persona::Role::META || block.content.strip.empty?
+        next if role == Persona::Role::META || role == Persona::Role::RESPONSE_FORMAT || block.content.strip.empty?
 
         if role == current_role
           current_text += " " + block.content.strip
@@ -92,6 +94,27 @@ module Chat
 
       deliberate_persona = meta_persona_line << block_persona_line
       default_persona << deliberate_persona.resolve(config)
+    end
+
+    def response_format
+      format_blocks = @blocks.zip(@roles).select { |block, role| role == Persona::Role::RESPONSE_FORMAT }
+      if format_blocks.empty?
+        nil
+      else
+        last_format = format_blocks.last[0].content.strip
+        begin
+          ret = JSON.parse(last_format).as_h
+        rescue JSON::ParseException
+          raise "Invalid JSON in response_format block: #{last_format}"
+        end
+        if ret.dig?("type") == "json_schema"
+          ret
+        elsif ret.dig?("type") == "object"
+          {"type" => "json_schema", "json_schema" => {"name" => "unnamed", "schema" => ret}}
+        else
+          raise "Invalid JSON in response_format block: #{last_format}"
+        end
+      end
     end
   end
 end

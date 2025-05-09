@@ -31,6 +31,7 @@ module Completer::OpenRouterComplete
           json.field("presence_penalty", persona.key_value_pairs["presence_penalty"].to_f)
           json.field("min_p", persona.key_value_pairs["min_p"].to_f)
           json.field("repetition_penalty", persona.key_value_pairs["repetition_penalty"].to_f)
+          json.field("response_format", chat.response_format)
         end
       end
 
@@ -89,12 +90,20 @@ module Completer::OpenRouterComplete
           json = JSON.parse(line[6..-1])
           if delta = json.dig?("choices", 0, "delta", "content")
             return delta.as_s
+          elsif json.dig?("error")
+            if raw = json.dig?("error", "metadata", "raw")
+              raise raw.as_s
+            else
+              raise "Error: #{json["error"]}"
+            end
           end
         rescue JSON::ParseException
-          puts "Error: #{line}"
+          raise "Error: #{line}"
         end
+      elsif line.includes?("OPENROUTER PROCESSING")
+        nil
       else
-        puts "Unknown line: #{line}"
+        raise "Unknown line: #{line}"
       end
     end
 

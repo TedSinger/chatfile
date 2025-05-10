@@ -5,8 +5,8 @@ module Persona
     USER = "user"
     META = "meta"
     AI   = "ai"
-    SHELL = "shell"
-    RESPONSE_FORMAT = "struct"
+    SHELL = "$"
+    JSON_RESPONSE_FORMAT = "{}"
   end
 
   struct Persona
@@ -70,8 +70,8 @@ module Persona
     def inferred_role
       if @keywords.includes?(Role::USER)
         Role::USER
-      elsif @keywords.includes?(Role::RESPONSE_FORMAT)
-        Role::RESPONSE_FORMAT
+      elsif @keywords.includes?(Role::JSON_RESPONSE_FORMAT)
+        Role::JSON_RESPONSE_FORMAT
       elsif @keywords.includes?(Role::META)
         Role::META
       elsif @keywords.includes?(Role::SHELL)

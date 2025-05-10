@@ -31,8 +31,8 @@ module Chat
           previous_role = Persona::Role::USER
         elsif persona_line.inferred_role == Persona::Role::META
           roles << Persona::Role::META
-        elsif persona_line.inferred_role == Persona::Role::RESPONSE_FORMAT
-          roles << Persona::Role::RESPONSE_FORMAT
+        elsif persona_line.inferred_role == Persona::Role::JSON_RESPONSE_FORMAT
+          roles << Persona::Role::JSON_RESPONSE_FORMAT
         elsif persona_line.inferred_role == Persona::Role::AI
           roles << Persona::Role::AI
           previous_role = Persona::Role::AI
@@ -62,7 +62,7 @@ module Chat
       current_text = ""
 
       @blocks.zip(@roles).each do |block, role|
-        next if role == Persona::Role::META || role == Persona::Role::RESPONSE_FORMAT || block.content.strip.empty?
+        next if role == Persona::Role::META || role == Persona::Role::JSON_RESPONSE_FORMAT || block.content.strip.empty?
 
         if role == current_role
           current_text += " " + block.content.strip
@@ -97,7 +97,7 @@ module Chat
     end
 
     def response_format
-      format_blocks = @blocks.zip(@roles).select { |block, role| role == Persona::Role::RESPONSE_FORMAT }
+      format_blocks = @blocks.zip(@roles).select { |block, role| role == Persona::Role::JSON_RESPONSE_FORMAT }
       if format_blocks.empty?
         nil
       else

@@ -2,10 +2,10 @@ require "json"
 
 module Persona
   module Role
-    USER = "user"
-    META = "meta"
-    AI   = "ai"
-    SHELL = "$"
+    USER                 = "user"
+    META                 = "meta"
+    AI                   = "ai"
+    SHELL                = "$"
     JSON_RESPONSE_FORMAT = "{}"
   end
 
@@ -52,16 +52,16 @@ module Persona
     def self.parse_persona_line(line)
       raise ArgumentError.new("Line must start with #@") unless line.starts_with?("#@")
 
-      parts = line[2..-1].strip.split(/\s+/)
+      parts = line[2..-1].split(/\s+/)
       keywords = [] of String
       key_value_pairs = {} of String => String
 
       parts.each do |part|
         if part.includes?("=")
           key, value = part.split("=", 2)
-          key_value_pairs[key] = value
+          key_value_pairs[key.strip] = value.strip
         else
-          keywords << part
+          keywords << part.strip if part.strip.size > 0
         end
       end
       PersonaLine.new(keywords, key_value_pairs)

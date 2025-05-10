@@ -62,6 +62,58 @@ end
 OptionParser.parse do |parser|
   parser.banner = "Usage: chatfile [arguments] <filename>"
 
+  parser.on("--get-started", "Create a default config file and example `chatfile`") do
+    config_dir = Path["~/.config/chatfile"].expand(home: true)
+    Dir.mkdir_p(config_dir)
+    config_file = config_dir / "personas.json"
+
+    unless File.exists?(config_file)
+      File.write(config_file, {
+        "defaults_by_provider" => {
+          "openrouter" => {"model" => "openai/gpt-4-turbo-preview", "max_tokens" => 1000},
+          "bedrock"    => {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0"},
+        },
+        "shortcuts" => {"shakespeare" => {"prompt" => "You are the bard of Avon, loquacious poet", "temperature" => "1.5"}, "spock" => {"prompt" => "You are Spock, the logical Vulcan", "temperature" => "0.2"}},
+      }.to_pretty_json)
+      puts "Created ~/.config/chatfile/personas.json"
+    end
+
+    File.write("example.chat", <<-CHAT
+    #! /usr/bin/env chatfile
+    #@ user
+    What's the situation out there, Mister Spock?
+    #@ shakespeare
+    The fighter, like a hawk upon the wing,
+    Doth strike with purpose, aiming to ensnare,
+    To silence engines that still whisper life,
+    And snuff the flick'ring flame of hope within.
+    'Tis a tale of treachery, borne of dark desire,
+    Where life and death do waltz upon the edge of a blade.
+    #@
+    Come again?
+    #@ spock
+    CHAT
+    )
+    File.chmod("example.chat", 0o744)
+
+    puts "Created example.chat"
+    puts "Edit example.chat and run it with ./example.chat"
+
+    if Completer::OpenRouterComplete.can_access
+      puts "OpenRouter is available"
+    else
+      puts "OpenRouter is not available. Try setting OPENROUTER_API_KEY"
+    end
+
+    if Completer::AwsCreds.can_access
+      puts "Bedrock is available"
+    else
+      puts "Bedrock is not available. Try setting AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
+    end
+
+    exit
+  end
+
   parser.on("-v", "--version", "Show version") do
     puts "Chatfile version #{VERSION}"
     exit

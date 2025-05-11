@@ -31,7 +31,7 @@ module Completer::OpenRouterComplete
           json.field("presence_penalty", persona.key_value_pairs["presence_penalty"].to_f)
           json.field("min_p", persona.key_value_pairs["min_p"].to_f)
           json.field("repetition_penalty", persona.key_value_pairs["repetition_penalty"].to_f)
-          json.field("response_format", chat.response_format)
+          json.field("response_format", OpenRouterComplete.generic_json_schema_to_openrouter_response_format(chat.response_format.not_nil!)) if chat.response_format
         end
       end
 
@@ -65,6 +65,21 @@ module Completer::OpenRouterComplete
       "assistant"
     else
       raise "Unknown role: #{role}"
+    end
+  end
+
+  def self.generic_json_schema_to_openrouter_response_format(json_schema : JSON::Any) : JSON::Any
+    if json_schema.dig?("type") == "json_schema"
+      json_schema
+    elsif json_schema.dig?("type") == "object"
+      JSON.parse(JSON.build do |json|
+        json.object do
+          json.field("type", "json_schema")
+          json.field("json_schema", {"name" => "unnamed", "schema" => json_schema})
+        end
+      end)
+    else
+      raise "Don't know how to convert JSON schema to OpenRouter response format: #{json_schema}"
     end
   end
 

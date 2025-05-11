@@ -63,7 +63,6 @@ module Chat
 
       @blocks.zip(@roles).each do |block, role|
         next if role == Persona::Role::META || role == Persona::Role::JSON_RESPONSE_FORMAT || block.content.strip.empty?
-
         if role == current_role
           current_text += " " + block.content.strip
         else
@@ -88,30 +87,23 @@ module Chat
 
     def last_block_persona(provider : String, config : Persona::PersonaConfig)
       default_persona = Persona::Persona.zero << config.defaults_by_provider[provider]
-
       meta_persona_line = persona_line_from_meta_blocks()
       block_persona_line = Persona::PersonaLine.parse_persona_line(@blocks[-1].persona_line)
 
       deliberate_persona = meta_persona_line << block_persona_line
-      default_persona << deliberate_persona.resolve(config)
+      result = default_persona << deliberate_persona.resolve(config)
+      result
     end
 
-    def response_format
+    def response_format : JSON::Any?
       format_blocks = @blocks.zip(@roles).select { |block, role| role == Persona::Role::JSON_RESPONSE_FORMAT }
       if format_blocks.empty?
         nil
       else
         last_format = format_blocks.last[0].content.strip
         begin
-          ret = JSON.parse(last_format).as_h
+          JSON.parse(last_format)
         rescue JSON::ParseException
-          raise "Invalid JSON in response_format block: #{last_format}"
-        end
-        if ret.dig?("type") == "json_schema"
-          ret
-        elsif ret.dig?("type") == "object"
-          {"type" => "json_schema", "json_schema" => {"name" => "unnamed", "schema" => ret}}
-        else
           raise "Invalid JSON in response_format block: #{last_format}"
         end
       end

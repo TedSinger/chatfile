@@ -36,6 +36,12 @@ def process_chat_file(filename : String, completer : Completer::Completer)
   text = File.read(filename)
   blocks = Block.blocks_from_text(text)
   chat = Chat::Chat.new(blocks)
+  if chat.conversation_blocks.empty?
+    puts "No conversation blocks found. Try writing starting a block like this:"
+    puts "#@"
+    puts "hi"
+    exit(1)
+  end
   persona_config = Persona::PersonaConfig.default_config
 
   chunks = completer.complete(chat, persona_config)
@@ -70,7 +76,7 @@ OptionParser.parse do |parser|
     unless File.exists?(config_file)
       File.write(config_file, {
         "defaults_by_provider" => {
-          "openrouter" => {"model" => "openai/gpt-4-turbo-preview", "max_tokens" => 1000},
+          "openrouter" => {"model" => "openai/gpt-4-turbo-preview", "max_tokens" => "1000"},
           "bedrock"    => {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0"},
         },
         "shortcuts" => {"shakespeare" => {"prompt" => "You are the bard of Avon, loquacious poet", "temperature" => "1.5"}, "spock" => {"prompt" => "You are Spock, the logical Vulcan", "temperature" => "0.2"}},
@@ -79,7 +85,7 @@ OptionParser.parse do |parser|
     end
 
     File.write("example.chat", <<-CHAT
-    #! /usr/bin/env chatfile
+    #!/usr/bin/env chatfile
     #@ user
     What's the situation out there, Mister Spock?
     #@ shakespeare

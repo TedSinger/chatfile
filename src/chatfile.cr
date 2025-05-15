@@ -103,7 +103,8 @@ OptionParser.parse do |parser|
     File.chmod("example.chat", 0o744)
 
     puts "Created example.chat"
-    puts "Edit example.chat and run it with ./example.chat"
+    puts "Edit example.chat and run it with `chatfile example.chat`"
+    puts "Or if `chatfile` is in your PATH, you can run the chat directly with `example.chat`"
 
     if Completer::OpenRouterComplete.can_access
       puts "OpenRouter is available"

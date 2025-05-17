@@ -58,7 +58,7 @@ module Chat
       end
     end
 
-    private def run_shell_command(command : String, cwd : String? = nil) : String
+    private def run_shell_command(command : String, cwd : Path? = nil) : String
       stdout = IO::Memory.new
       stderr = IO::Memory.new
       status = Process.run(command, shell: true, output: stdout, error: stderr, chdir: cwd)
@@ -87,7 +87,7 @@ module Chat
             cwd = nil
             Persona::PersonaLine.parse_persona_line(block.persona_line).keywords.each do |keyword|
               if File.exists?(Path[keyword].expand(home: true))
-                cwd = keyword
+                cwd = Path[keyword].expand(home: true)
               end
             end
             current_role = Persona::Role::USER

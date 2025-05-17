@@ -57,7 +57,7 @@ module Completer::BedrockComplete
       if response_iter.is_a?(Tuple(HTTP::Status, String))
         raise CompleterError.new(response_iter.first, response_iter.last)
       end
-      response_iter.compact_map { |event| BedrockComplete.extract_event_from_bedrock_response(event) }
+      response_iter.compact_map { |event| BedrockComplete.extract_event_from_bedrock_response(AWS::BedrockRuntime::ConverseStreamEvent.from_event_payload(event)) }
     end
   end
 

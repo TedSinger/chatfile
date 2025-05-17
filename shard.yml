@@ -15,3 +15,4 @@ license: MIT
 dependencies:
   aws:
     github: TedSinger/crystal-aws
+    branch: converse_stream

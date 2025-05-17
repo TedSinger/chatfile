@@ -108,17 +108,12 @@ OptionParser.parse do |parser|
     puts "Or if `chatfile` is in your PATH, you can run the chat directly with `example.chat`"
 
     if Completer::OpenRouterComplete.can_access
-      puts "OpenRouter is available"
+      puts "OpenRouter is available!"
+    elsif Completer::AwsCreds.can_access
+      puts "Bedrock is available!"
     else
-      puts "OpenRouter is not available. Try setting OPENROUTER_API_KEY"
+      puts "Neither OpenRouter nor Bedrock are available. Try setting OPENROUTER_API_KEY, or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
     end
-
-    if Completer::AwsCreds.can_access
-      puts "Bedrock is available"
-    else
-      puts "Bedrock is not available. Try setting AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
-    end
-
     exit
   end
 

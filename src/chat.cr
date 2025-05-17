@@ -58,6 +58,20 @@ module Chat
       end
     end
 
+    private def run_shell_command(command : String) : String
+      stdout = IO::Memory.new
+      stderr = IO::Memory.new
+      status = Process.run(command, shell: true, output: stdout, error: stderr)
+      output = stdout.to_s
+      error = stderr.to_s
+      result = "```shell\n$ #{command}"
+      result += "\n#{output}" unless output.empty?
+      result += "\nstderr: #{error}" unless error.empty?
+      result += "\nExit code: #{status.exit_code}" unless status.success?
+      result += "\n```"
+      result
+    end
+
     def conversation_blocks
       conversation = [] of {String, String}
       current_role = nil
@@ -73,8 +87,7 @@ module Chat
             current_role = Persona::Role::USER
             lines = block.content.strip.split("\n")
             current_text = lines.map do |line|
-              stdout = `#{line}`
-              "```shell\n$ #{line}\n#{stdout}\n```"
+              run_shell_command(line)
             end.join("\n")
           else
             current_role = role

@@ -5,10 +5,12 @@ module Chat
   class Chat
     getter blocks : Array(Block::Block)
     getter roles : Array(String)
+    getter conversation : Array(Tuple(String, String))
 
     def initialize(blocks : Array(Block::Block))
       @blocks = blocks
       @roles = infer_roles(blocks)
+      @conversation = conversation_blocks
     end
 
     private def infer_roles(blocks : Array(Block::Block)) : Array(String)

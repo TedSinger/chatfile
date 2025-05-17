@@ -1,5 +1,6 @@
 require "http/client"
 require "./completer"
+require "http/status"
 
 module Completer::OpenRouterComplete
   class OpenRouterCompleter < Completer
@@ -17,7 +18,7 @@ module Completer::OpenRouterComplete
           json.field("messages",
             [
               {"role" => "system", "content" => persona.key_value_pairs["prompt"]},
-              *chat.conversation_blocks.map { |role, content|
+              *chat.conversation.map { |role, content|
                 {"role" => OpenRouterComplete.generic_role_to_openrouter_role(role), "content" => content}
               },
             ]
@@ -43,7 +44,7 @@ module Completer::OpenRouterComplete
         if response.status_code == 200
           return EventStream.new(response.body_io)
         else
-          raise "Failed to complete: #{response.status_code}"
+          raise CompleterError.new(HTTP::Status.new(response.status_code), response.body_io.gets_to_end)
         end
       end
     end

@@ -36,17 +36,18 @@ def process_chat_file(filename : String, completer : Completer::Completer)
   text = File.read(filename)
   blocks = Block.blocks_from_text(text)
   chat = Chat::Chat.new(blocks)
-  if chat.conversation_blocks.empty?
-    puts "No conversation blocks found. Try writing starting a block like this:"
+  if chat.conversation.empty?
+    puts "No conversation blocks found. Try writing a block like this:"
     puts "#@"
     puts "hi"
-    exit(1)
+    return 1
   end
   persona_config = Persona::PersonaConfig.default_config
 
   chunks = completer.complete(chat, persona_config)
 
   File.open(filename, "a") do |file|
+    # FIXME: This is all abstraction-violating hackery
     file.print("\n") unless text.ends_with?("\n")
 
     if !chat.blocks[-1].content.strip.empty?
@@ -63,6 +64,7 @@ def process_chat_file(filename : String, completer : Completer::Completer)
     file.print("#@ user\n")
     file.flush
   end
+  0
 end
 
 def get_started
@@ -102,7 +104,7 @@ def get_started
 
   puts "Created example.chat"
   puts "Edit example.chat and run it with `chatfile example.chat`"
-  puts "Or if `chatfile` is in your PATH, you can run the chat directly with `example.chat`"
+  puts "Or if `chatfile` is in your PATH, you can run the chat directly with `./example.chat`"
 
   if Completer::OpenRouterComplete.can_access
     puts "OpenRouter is available!"
@@ -146,6 +148,7 @@ OptionParser.parse do |parser|
       exit(1)
     end
     completer = get_completer(use_bedrock, use_openrouter, ENV.to_h)
-    process_chat_file(args[0], completer)
+    ret = process_chat_file(args[0], completer)
+    exit(ret)
   end
 end

@@ -24,7 +24,7 @@ module Completer::BedrockComplete
               json.field "topP", (persona.key_value_pairs["top_p"]).to_f
             end
           end
-          json.field "messages", chat.conversation_blocks.map { |role, content|
+          json.field "messages", chat.conversation.map { |role, content|
             {
               "role" => BedrockComplete.generic_role_to_bedrock_role(role),
               "content" => [{"type" => "text", "text" => content}]
@@ -48,12 +48,15 @@ module Completer::BedrockComplete
         @credentials["AWS_ACCESS_KEY_ID"]?.not_nil!,
         @credentials["AWS_SECRET_ACCESS_KEY"]?.not_nil!,
         @credentials["AWS_REGION"]?.not_nil!,
-        @credentials["AWS_SESSION_TOKEN"]?
+        sts_token: @credentials["AWS_SESSION_TOKEN"]?
       )
       response_iter = client.converse_stream(
         persona.key_value_pairs["model"],
         conversation_body
       )
+      if response_iter.is_a?(Tuple(HTTP::Status, String))
+        raise CompleterError.new(response_iter.first, response_iter.last)
+      end
       response_iter.compact_map { |event| BedrockComplete.extract_event_from_bedrock_response(event) }
     end
   end
@@ -70,9 +73,9 @@ module Completer::BedrockComplete
     end
   end
 
-  def self.extract_event_from_bedrock_response(event : AWS::BedrockRuntime::BedrockRuntimeConverseStreamEvent) : String | Iterator::Stop | Nil
+  def self.extract_event_from_bedrock_response(event : AWS::BedrockRuntime::ConverseStreamEvent) : String | Iterator::Stop | Nil
     case event
-    when AWS::BedrockRuntime::BedrockRuntimeConverseStreamEvent::ContentBlockDelta
+    when AWS::BedrockRuntime::ConverseStreamEvent::ContentBlockDelta
       event.delta.text || event.delta.toolUse.not_nil!.input
     else
       nil

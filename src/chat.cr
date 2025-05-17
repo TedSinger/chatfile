@@ -58,10 +58,10 @@ module Chat
       end
     end
 
-    private def run_shell_command(command : String) : String
+    private def run_shell_command(command : String, cwd : String? = nil) : String
       stdout = IO::Memory.new
       stderr = IO::Memory.new
-      status = Process.run(command, shell: true, output: stdout, error: stderr)
+      status = Process.run(command, shell: true, output: stdout, error: stderr, chdir: cwd)
       output = stdout.to_s
       error = stderr.to_s
       result = "```shell\n$ #{command}"
@@ -84,10 +84,16 @@ module Chat
         else
           conversation << {current_role, current_text} if current_role
           if role == Persona::Role::SHELL
+            cwd = nil
+            Persona::PersonaLine.parse_persona_line(block.persona_line).keywords.each do |keyword|
+              if File.exists?(Path[keyword].expand(home: true))
+                cwd = keyword
+              end
+            end
             current_role = Persona::Role::USER
             lines = block.content.strip.split("\n")
             current_text = lines.map do |line|
-              run_shell_command(line)
+              run_shell_command(line, cwd)
             end.join("\n")
           else
             current_role = role

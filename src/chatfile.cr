@@ -83,23 +83,24 @@ OptionParser.parse do |parser|
       }.to_pretty_json)
       puts "Created ~/.config/chatfile/personas.json"
     end
-
-    File.write("example.chat", <<-CHAT
-    #!/usr/bin/env chatfile
-    #@ user
-    What's the situation out there, Mister Spock?
-    #@ shakespeare
-    The fighter, like a hawk upon the wing,
-    Doth strike with purpose, aiming to ensnare,
-    To silence engines that still whisper life,
-    And snuff the flick'ring flame of hope within.
-    'Tis a tale of treachery, borne of dark desire,
-    Where life and death do waltz upon the edge of a blade.
-    #@
-    Come again?
-    #@ spock
-    CHAT
-    )
+    unless File.exists?("example.chat")
+      File.write("example.chat", <<-CHAT
+      #!/usr/bin/env chatfile
+      #@ user
+      What's the situation out there, Mister Spock?
+      #@ shakespeare
+      The fighter, like a hawk upon the wing,
+      Doth strike with purpose, aiming to ensnare,
+      To silence engines that still whisper life,
+      And snuff the flick'ring flame of hope within.
+      'Tis a tale of treachery, borne of dark desire,
+      Where life and death do waltz upon the edge of a blade.
+      #@
+      Come again?
+      #@ spock
+      CHAT
+      )
+    end
     File.chmod("example.chat", 0o744)
 
     puts "Created example.chat"

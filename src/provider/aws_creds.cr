@@ -1,4 +1,4 @@
-module Completer
+module Provider
   module AwsCreds
 
     def self.can_access

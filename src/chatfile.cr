@@ -1,12 +1,12 @@
 require "option_parser"
 require "./block"
 require "./persona"
-require "./completer/bedrock_complete"
-require "./completer/openrouter_complete"
-require "./completer/openai_completer"
+require "./provider/bedrock"
+require "./provider/openrouter"
+require "./provider/openai"
 require "./chat"
-require "./completer/completer"
-require "./completer/aws_creds"
+require "./provider/provider"
+require "./provider/aws_creds"
 
 module Chatfile
 end
@@ -14,7 +14,7 @@ end
 VERSION = "0.1.0"
 
 
-def process_chat_file(filename : String, completer : Completer::Completer)
+def process_chat_file(filename : String, completer : Provider::Completer)
   text = File.read(filename)
   blocks = Block.blocks_from_text(text)
   chat = Chat::Chat.new(blocks)
@@ -27,7 +27,7 @@ def process_chat_file(filename : String, completer : Completer::Completer)
   persona_config = Persona::PersonaConfig.default_config
   begin
     chunks = completer.complete(chat, persona_config)
-  rescue e : Completer::CompleterError
+  rescue e : Provider::CompleterError
     puts "Error: #{e}"
     return 1
   end
@@ -93,11 +93,11 @@ def get_started
   puts "Edit example.chat and run it with `chatfile example.chat`"
   puts "Or if `chatfile` is in your PATH, you can run the chat directly with `./example.chat`"
 
-  if Completer::OpenRouter.can_access
+  if Provider::OpenRouter.can_access
     puts "OpenRouter is available!"
-  elsif Completer::AwsCreds.can_access
+  elsif Provider::AwsCreds.can_access
     puts "Bedrock is available!"
-  elsif Completer::OpenAI.can_access
+  elsif Provider::OpenAI.can_access
     puts "OpenAI is available!"
   else
     puts "No providers are available. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or OPENAI_API_KEY"
@@ -105,10 +105,10 @@ def get_started
 end
 
 def provider_from_flag(arg : String)
-  if Completer::KNOWN_PROVIDERS.includes?(arg)
+  if Provider::KNOWN_PROVIDERS.includes?(arg)
     arg
   else
-    options = "{" + Completer::KNOWN_PROVIDERS.join(", ") + "}"
+    options = "{" + Provider::KNOWN_PROVIDERS.join(", ") + "}"
     raise "Unknown provider: #{arg}. Try --provider=#{options}."
   end
 end
@@ -122,7 +122,7 @@ OptionParser.parse do |parser|
   end
 
   flag_provider = nil
-  provider_help = "Use a specific provider. Known providers: #{Completer::KNOWN_PROVIDERS.join(", ")}\n  Respects env-var $CHATFILE_PROVIDER otherwise"
+  provider_help = "Use a specific provider. Known providers: #{Provider::KNOWN_PROVIDERS.join(", ")}\n  Respects env-var $CHATFILE_PROVIDER otherwise"
   parser.on("-p PROVIDER", "--provider=PROVIDER", provider_help) do |arg|
     begin
       flag_provider = provider_from_flag(arg)
@@ -147,7 +147,7 @@ OptionParser.parse do |parser|
       puts parser
       exit(1)
     end
-    completer = Completer.get_completer(flag_provider, ENV.to_h)
+    completer = Provider.get_completer(flag_provider, ENV.to_h)
     ret = process_chat_file(args[0], completer)
     exit(ret)
   end

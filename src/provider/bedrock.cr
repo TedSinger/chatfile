@@ -1,11 +1,11 @@
 require "aws/bedrock"
 require "aws/bedrock_events"
-require "./completer"
+require "./provider"
 require "../chat"
 require "../persona"
 require "./aws_creds"
 
-module Completer::Bedrock
+module Provider::Bedrock
   class Completer < Completer
     def initialize(credentials : Hash(String, String | Nil))
       @credentials = credentials

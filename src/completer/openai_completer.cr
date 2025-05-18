@@ -43,11 +43,7 @@ module Completer::OpenAI
   end
 
   def self.can_access : Bool
-    if ENV.has_key?("OPENAI_API_KEY")
-      true
-    else
-      false
-    end
+    ENV.has_key?("OPENAI_API_KEY")
   end
 
   def self.generic_role_to_openai_role(role : String) : String

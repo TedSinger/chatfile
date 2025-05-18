@@ -50,11 +50,7 @@ module Completer::OpenRouter
   end
 
   def self.can_access : Bool
-    if ENV.has_key?("OPENROUTER_API_KEY")
-      true
-    else
-      false
-    end
+    ENV.has_key?("OPENROUTER_API_KEY")
   end
 
   def self.generic_role_to_openrouter_role(role : String) : String

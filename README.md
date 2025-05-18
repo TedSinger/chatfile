@@ -1,5 +1,7 @@
 # chatfile
 
+![demo](./demo.gif)
+
 1) A file format for a text interaction between a human and an LLM
 2) A program that interprets this file, sends it to an LLM endpoint, and fills in the response
 
@@ -29,5 +31,5 @@ Blocks are delimited by lines starting with `#@`. This line may have keywords th
 - Add context by including a shell block (`#@ $`)
   - Commands in the block will be executed and the output provided to the model
   -
-- Uses any model on OpenRouter or AWS Bedrock
+- Use any model on OpenRouter or AWS Bedrock
 

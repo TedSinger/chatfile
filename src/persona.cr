@@ -1,4 +1,4 @@
-require "json"
+require "./persona_config"
 
 module Persona
   module Role
@@ -94,103 +94,17 @@ module Persona
       PersonaLine.new([] of String, {} of String => String)
     end
 
-    def resolve(config : PersonaConfig)
+    def resolve(config : PersonaConfig::PersonaConfig)
       persona = Persona.zero
       @keywords.each do |keyword|
-        if config.shortcuts[keyword]?
-          persona = persona << config.shortcuts[keyword]
+        if config[keyword]?
+          persona = persona << config[keyword]
         end
       end
       @key_value_pairs.each do |key, value|
         persona = persona << {key => value}
       end
       persona
-    end
-  end
-
-  struct PersonaConfig
-    include JSON::Serializable
-    getter shortcuts : Hash(String, Hash(String, String))
-    getter defaults_by_provider : Hash(String, Hash(String, String))
-
-    def initialize(config : Hash(String, Hash(String, Hash(String, String))))
-      @shortcuts = config["shortcuts"]
-      @defaults_by_provider = config["defaults_by_provider"]
-    end
-
-    def <<(other : Persona)
-      current = other
-      @config.each do |key_to_match, regex_to_match_value, persona|
-        if current.key_value_pairs[key_to_match]? && current.key_value_pairs[key_to_match].to_s.match(Regex.new(regex_to_match_value))
-          current = persona.<<(current)
-        end
-      end
-      current
-    end
-
-    def <<(other : PersonaConfig)
-      PersonaConfig.new({
-        "shortcuts"            => @shortcuts.merge(other.shortcuts) { |_, v1, v2| v1.merge(v2) },
-        "defaults_by_provider" => @defaults_by_provider.merge(other.defaults_by_provider) { |_, v1, v2| v1.merge(v2) },
-      })
-    end
-
-    def self.default_path
-      File.expand_path("~/.config/chatfile/personas.json", home: Path.home)
-    end
-
-    def self.default_config
-      default = self.from_json(<<-JSON
-        {
-            "defaults_by_provider": {
-                "openrouter": {
-                    "model": "x-ai/grok-3-mini-beta",
-                    "prompt": "You are a helpful assistant that can answer questions and help with tasks.",
-                    "temperature": "1.0",
-                    "max_tokens": "4096",
-                    "top_p": "1",
-                    "top_k": "0",
-                    "frequency_penalty": "0.0",
-                    "presence_penalty": "0.0",
-                    "min_p": "0.0",
-                    "repetition_penalty": "1.0",
-                    "top_a": "0.0",
-                    "stop": "[]"
-                },
-                "bedrock": {
-                    "model": "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
-                    "prompt": "You are a helpful assistant that can answer questions and help with tasks.",
-                    "temperature": "0.7",
-                    "anthropic_version": "bedrock-2023-05-31",
-                    "max_tokens": "4096",
-                    "stop_sequences": "[]",
-                    "top_p": "0.9",
-                    "top_k": "250"
-                },
-                "openai": {
-                    "model": "gpt-4o-mini",
-                    "prompt": "You are a helpful assistant that can answer questions and help with tasks.",
-                    "temperature": "0.7",
-                    "max_tokens": "4096",
-                    "top_p": "1",
-                    "frequency_penalty": "0.0",
-                    "presence_penalty": "0.0"
-                }
-            },
-            "shortcuts": {}
-        }
-      JSON
-      )
-      if File.exists?(self.default_path)
-        begin
-          default << self.from_json(File.read(self.default_path))
-        rescue e
-          puts "Error parsing default config: #{e}"
-          default
-        end
-      else
-        default
-      end
     end
   end
 end

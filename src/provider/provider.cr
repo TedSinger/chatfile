@@ -1,6 +1,8 @@
+require "../persona_config"
+
 module Provider
   abstract class Completer
-    abstract def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
+    abstract def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
 
     abstract def initialize(env : Hash(String, String))
   end
@@ -11,9 +13,9 @@ module Provider
   end
 
   KNOWN_PROVIDERS = {
-    "bedrock" => {Bedrock, Bedrock::Completer},
+    "bedrock"    => {Bedrock, Bedrock::Completer},
     "openrouter" => {OpenRouter, OpenRouter::Completer},
-    "openai" => {OpenAI, OpenAI::Completer},
+    "openai"     => {OpenAI, OpenAI::Completer},
   }
 
   def self.get_completer(provider_name : String?, env : Hash(String, String)) : Provider::Completer

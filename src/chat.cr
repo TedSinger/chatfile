@@ -1,5 +1,6 @@
 require "./block"
 require "./persona"
+require "./persona_config"
 
 module Chat
   class Chat
@@ -102,12 +103,12 @@ module Chat
         end
       end
 
-      conversation << {current_role, current_text} if current_role
+      conversation << {current_role, current_text} if current_role && !current_text.strip.empty?
       conversation
     end
 
-    def last_block_persona(provider : String, config : Persona::PersonaConfig)
-      default_persona = Persona::Persona.zero << config.defaults_by_provider[provider]
+    def last_block_persona(provider : String, config : PersonaConfig::PersonaConfig)
+      default_persona = (Persona::Persona.zero << config["global"]) << config[provider]
       meta_persona_line = persona_line_from_meta_blocks()
       block_persona_line = Persona::PersonaLine.parse_persona_line(@blocks[-1].persona_line)
 

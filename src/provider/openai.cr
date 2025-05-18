@@ -2,7 +2,7 @@ require "http/client"
 require "./provider"
 require "http/status"
 require "../chat"
-require "../persona"
+require "../persona_config"
 
 module Provider::OpenAI
   def self.can_access(env : Hash(String, String)) : Bool
@@ -13,7 +13,7 @@ module Provider::OpenAI
     def initialize(@env : Hash(String, String))
     end
 
-    def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
+    def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
       client = HTTP::Client.new(URI.new("https", "api.openai.com"))
       persona = chat.last_block_persona("openai", persona_config)
       puts persona

@@ -1,6 +1,7 @@
 require "option_parser"
 require "./block"
 require "./persona"
+require "./persona_config"
 require "./provider/bedrock"
 require "./provider/openrouter"
 require "./provider/openai"
@@ -22,8 +23,11 @@ def process_chat_file(filename : String, completer : Provider::Completer)
     puts "#@"
     puts "hi"
     return 1
+  elsif chat.conversation.last[0] == "ai"
+    puts "Last block is an AI block. Nothing to do"
+    return 0
   end
-  persona_config = Persona::PersonaConfig.default_config
+  persona_config = PersonaConfig.get
   begin
     chunks = completer.complete(chat, persona_config)
   rescue e : Provider::CompleterError
@@ -57,17 +61,8 @@ def get_started
   Dir.mkdir_p(config_dir)
   config_file = config_dir / "personas.json"
 
-  unless File.exists?(config_file)
-    File.write(config_file, {
-      "defaults_by_provider" => {
-        "openrouter" => {"model" => "openai/gpt-4-turbo-preview", "max_tokens" => "1000"},
-        "bedrock"    => {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0"},
-        "openai"     => {"model" => "gpt-4o-mini", "max_tokens" => "1000"},
-      },
-      "shortcuts" => {"shakespeare" => {"prompt" => "You are the bard of Avon, loquacious poet", "temperature" => "1.5"}, "spock" => {"prompt" => "You are Spock, the logical Vulcan", "temperature" => "0.2"}},
-    }.to_pretty_json)
-    puts "Created ~/.config/chatfile/personas.json"
-  end
+  PersonaConfig.maybe_create_default_config
+
   unless File.exists?("example.chat")
     File.write("example.chat", <<-CHAT
     #!/usr/bin/env chatfile

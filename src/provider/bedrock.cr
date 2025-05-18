@@ -2,7 +2,7 @@ require "aws/bedrock"
 require "aws/bedrock_events"
 require "./provider"
 require "../chat"
-require "../persona"
+require "../persona_config"
 require "./aws_creds"
 
 module Provider::Bedrock
@@ -17,7 +17,7 @@ module Provider::Bedrock
       @credentials = AwsCreds.get_credentials(env)
     end
 
-    def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
+    def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
       persona = chat.last_block_persona("bedrock", persona_config)
       puts persona
       conversation_body = JSON.build do |json|

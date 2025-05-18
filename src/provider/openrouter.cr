@@ -5,6 +5,10 @@ require "../chat"
 require "../persona"
 
 module Provider::OpenRouter
+  def self.can_access(env : Hash(String, String)) : Bool
+    env.has_key?("OPENROUTER_API_KEY")
+  end
+
   class Completer < Completer
     def initialize(@env : Hash(String, String))
     end
@@ -51,9 +55,6 @@ module Provider::OpenRouter
     end
   end
 
-  def self.can_access : Bool
-    ENV.has_key?("OPENROUTER_API_KEY")
-  end
 
   def self.generic_role_to_openrouter_role(role : String) : String
     case role

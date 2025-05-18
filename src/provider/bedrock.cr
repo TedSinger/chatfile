@@ -6,9 +6,15 @@ require "../persona"
 require "./aws_creds"
 
 module Provider::Bedrock
+  def self.can_access(env : Hash(String, String)) : Bool
+    AwsCreds.can_access(env)
+  end
+
   class Completer < Completer
-    def initialize(credentials : Hash(String, String | Nil))
-      @credentials = credentials
+    getter credentials : Hash(String, String?)
+
+    def initialize(env : Hash(String, String))
+      @credentials = AwsCreds.get_credentials(env)
     end
 
     def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)

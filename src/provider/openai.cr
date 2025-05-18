@@ -5,6 +5,10 @@ require "../chat"
 require "../persona"
 
 module Provider::OpenAI
+  def self.can_access(env : Hash(String, String)) : Bool
+    env.has_key?("OPENAI_API_KEY")
+  end
+
   class Completer < Completer
     def initialize(@env : Hash(String, String))
     end
@@ -46,10 +50,6 @@ module Provider::OpenAI
         end
       end
     end
-  end
-
-  def self.can_access : Bool
-    ENV.has_key?("OPENAI_API_KEY")
   end
 
   def self.generic_role_to_openai_role(role : String) : String

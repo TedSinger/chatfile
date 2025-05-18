@@ -92,11 +92,11 @@ def get_started
   puts "Edit example.chat and run it with `chatfile example.chat`"
   puts "Or if `chatfile` is in your PATH, you can run the chat directly with `./example.chat`"
 
-  if Provider::OpenRouter.can_access
+  if Provider::OpenRouter.can_access(ENV.to_h)
     puts "OpenRouter is available!"
-  elsif Provider::AwsCreds.can_access
+  elsif Provider::Bedrock.can_access(ENV.to_h)
     puts "Bedrock is available!"
-  elsif Provider::OpenAI.can_access
+  elsif Provider::OpenAI.can_access(ENV.to_h)
     puts "OpenAI is available!"
   else
     puts "No providers are available. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or OPENAI_API_KEY"

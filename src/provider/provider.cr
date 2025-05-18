@@ -1,6 +1,8 @@
 module Provider
   abstract class Completer
     abstract def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
+
+    abstract def initialize(env : Hash(String, String))
   end
 
   class CompleterError < Exception
@@ -23,7 +25,7 @@ module Provider
     end
     if requested_provider_name == "bedrock"
       puts "Using Bedrock because of #{reason}"
-      return Bedrock::Completer.new(AwsCreds.get_credentials)
+      return Bedrock::Completer.new(env)
     elsif requested_provider_name == "openrouter"
       puts "Using OpenRouter because of #{reason}"
       return OpenRouter::Completer.new(env)
@@ -32,13 +34,13 @@ module Provider
       return OpenAI::Completer.new(env)
     else
       # otherwise check .can_access
-      if OpenRouter.can_access
+      if OpenRouter.can_access(env)
         puts "Using OpenRouter because of .can_access"
         return OpenRouter::Completer.new(env)
-      elsif AwsCreds.can_access
+      elsif Bedrock.can_access(env)
         puts "Using Bedrock because of .can_access"
-        return Bedrock::Completer.new(AwsCreds.get_credentials)
-      elsif OpenAI.can_access
+        return Bedrock::Completer.new(env)
+      elsif OpenAI.can_access(env)
         puts "Using OpenAI because of .can_access"
         return OpenAI::Completer.new(env)
       else

@@ -13,7 +13,6 @@ end
 
 VERSION = "0.1.0"
 
-
 def process_chat_file(filename : String, completer : Provider::Completer)
   text = File.read(filename)
   blocks = Block.blocks_from_text(text)

@@ -11,7 +11,6 @@ module Provider
   # Also serves as a default preference list
   KNOWN_PROVIDERS = ["bedrock", "openrouter", "openai"]
 
-
   def self.get_completer(provider_name_from_flag : String?, env : Hash(String, String)) : Completer
     if provider_name_from_flag
       requested_provider_name = provider_name_from_flag

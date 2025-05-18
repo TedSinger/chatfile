@@ -26,20 +26,20 @@ module Provider::Bedrock
           end
           json.field "messages", chat.conversation.map { |role, content|
             {
-              "role" => Bedrock.generic_role_to_bedrock_role(role),
-              "content" => [{"type" => "text", "text" => content}]
+              "role"    => Bedrock.generic_role_to_bedrock_role(role),
+              "content" => [{"type" => "text", "text" => content}],
             }
           }
           json.field "system", [{"type" => "text", "text" => persona.key_value_pairs["prompt"]}]
           json.field "toolConfig", {
             "toolChoice" => {
-              "any" => {} of String => String
+              "any" => {} of String => String,
             },
             "tools" => [
               {
-                "toolSpec" => Bedrock.generic_json_schema_to_bedrock_tool(chat.response_format.not_nil!)
-              }
-            ]
+                "toolSpec" => Bedrock.generic_json_schema_to_bedrock_tool(chat.response_format.not_nil!),
+              },
+            ],
           } if chat.response_format
         end
       end
@@ -60,7 +60,6 @@ module Provider::Bedrock
       response_iter.compact_map { |event| Bedrock.extract_event_from_bedrock_response(AWS::BedrockRuntime::ConverseStreamEvent.from_event_payload(event)) }
     end
   end
-
 
   def self.generic_role_to_bedrock_role(role : String) : String
     case role
@@ -109,7 +108,7 @@ module Provider::Bedrock
           json.field("name", json_schema.dig?("name") || json_schema.dig?("title") || "unnamed")
           json.field("description", json_schema.dig?("description") || "unnamed")
           json.field("inputSchema", {
-            "json" => json_schema
+            "json" => json_schema,
           })
         end
       end)
@@ -117,5 +116,4 @@ module Provider::Bedrock
       raise "Don't know how to convert JSON schema to Bedrock tool: #{json_schema}"
     end
   end
-  
 end

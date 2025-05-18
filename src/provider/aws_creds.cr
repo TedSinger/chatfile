@@ -1,6 +1,5 @@
 module Provider
   module AwsCreds
-
     def self.can_access
       if ENV.has_key?("AWS_ACCESS_KEY_ID") && ENV.has_key?("AWS_SECRET_ACCESS_KEY")
         true
@@ -23,7 +22,7 @@ module Provider
         credentials_hash = JSON.parse(credentials_bytes).as_h
         {
           "AWS_ACCESS_KEY_ID"     => "AccessKeyId",
-          "AWS_SECRET_ACCESS_KEY" => "SecretAccessKey", 
+          "AWS_SECRET_ACCESS_KEY" => "SecretAccessKey",
           "AWS_REGION"            => "Region",
           "AWS_SESSION_TOKEN"     => "SessionToken",
         }.each do |env_key, cred_key|
@@ -41,11 +40,11 @@ module Provider
         sections = {} of String => Hash(String, String)
         section_name = "default"
         sections[section_name] = {} of String => String
-        
+
         config.each_line do |line|
           line = line.strip
           next if line.empty? || line.starts_with?("#")
-          
+
           if line.starts_with?("[") && line.ends_with?("]")
             section_name = line[1..-2].strip
             sections[section_name] = {} of String => String
@@ -55,7 +54,7 @@ module Provider
           end
         end
 
-        return sections["profile #{ENV["AWS_PROFILE"]? || "default" }"]
+        return sections["profile #{ENV["AWS_PROFILE"]? || "default"}"]
       end
 
       return {} of String => String

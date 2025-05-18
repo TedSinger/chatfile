@@ -5,8 +5,8 @@ require "../chat"
 require "../persona"
 require "./aws_creds"
 
-module Completer::BedrockComplete
-  class BedrockCompleter < Completer
+module Completer::Bedrock
+  class Completer < Completer
     def initialize(credentials : Hash(String, String | Nil))
       @credentials = credentials
     end
@@ -26,7 +26,7 @@ module Completer::BedrockComplete
           end
           json.field "messages", chat.conversation.map { |role, content|
             {
-              "role" => BedrockComplete.generic_role_to_bedrock_role(role),
+              "role" => Bedrock.generic_role_to_bedrock_role(role),
               "content" => [{"type" => "text", "text" => content}]
             }
           }
@@ -37,7 +37,7 @@ module Completer::BedrockComplete
             },
             "tools" => [
               {
-                "toolSpec" => BedrockComplete.generic_json_schema_to_bedrock_tool(chat.response_format.not_nil!)
+                "toolSpec" => Bedrock.generic_json_schema_to_bedrock_tool(chat.response_format.not_nil!)
               }
             ]
           } if chat.response_format
@@ -57,7 +57,7 @@ module Completer::BedrockComplete
       if response_iter.is_a?(Tuple(HTTP::Status, String))
         raise CompleterError.new(response_iter.first, response_iter.last)
       end
-      response_iter.compact_map { |event| BedrockComplete.extract_event_from_bedrock_response(AWS::BedrockRuntime::ConverseStreamEvent.from_event_payload(event)) }
+      response_iter.compact_map { |event| Bedrock.extract_event_from_bedrock_response(AWS::BedrockRuntime::ConverseStreamEvent.from_event_payload(event)) }
     end
   end
 

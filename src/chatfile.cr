@@ -13,31 +13,6 @@ end
 
 VERSION = "0.1.0"
 
-def get_completer(use_bedrock : Bool, use_openrouter : Bool, use_openai : Bool, env : Hash(String, String)) : Completer::Completer
-  # first check for an explicit flag
-  if use_bedrock
-    puts "Using Bedrock because of --bedrock flag"
-    return Completer::BedrockComplete::BedrockCompleter.new(Completer::AwsCreds.get_credentials)
-  elsif use_openrouter
-    puts "Using OpenRouter because of --openrouter flag"
-    return Completer::OpenRouter::Completer.new(env)
-  elsif use_openai
-    puts "Using OpenAI because of --openai flag"
-    return Completer::OpenAI::Completer.new(env)
-  # otherwise check .can_access
-  elsif Completer::OpenRouter.can_access
-    puts "Using OpenRouter because of .can_access"
-    return Completer::OpenRouter::Completer.new(env)
-  elsif Completer::AwsCreds.can_access
-    puts "Using Bedrock because of .can_access"
-    return Completer::BedrockComplete::BedrockCompleter.new(Completer::AwsCreds.get_credentials)
-  elsif Completer::OpenAI.can_access
-    puts "Using OpenAI because of .can_access"
-    return Completer::OpenAI::Completer.new(env)
-  else
-    raise "No access to OpenRouter, Bedrock, or OpenAI"
-  end
-end
 
 def process_chat_file(filename : String, completer : Completer::Completer)
   text = File.read(filename)
@@ -166,7 +141,7 @@ OptionParser.parse do |parser|
       puts parser
       exit(1)
     end
-    completer = get_completer(use_bedrock, use_openrouter, use_openai, ENV.to_h)
+    completer = Completer.get_completer(use_bedrock, use_openrouter, use_openai, ENV.to_h)
     ret = process_chat_file(args[0], completer)
     exit(ret)
   end

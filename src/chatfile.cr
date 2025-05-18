@@ -61,7 +61,7 @@ def process_chat_file(filename : String, completer : Completer::Completer)
     end
 
     file.print("\n") unless chat.blocks[-1].content.ends_with?("\n")
-    file.print("#@ user\n")
+    file.print("#@\n")
     file.flush
   end
   0

@@ -17,14 +17,14 @@ module Mini
         result[current_section.not_nil!][current_key.not_nil!] += "\n#{line.rstrip}"
       elsif line.starts_with?('[')
         if line.ends_with?(']')
-            if current_multi_line_prefix && current_section && current_key
+          if current_multi_line_prefix && current_section && current_key
             # fix accidental trailing whitespace on multi-line values
             result[current_section][current_key] = result[current_section][current_key].rstrip
-            end
-            current_multi_line_prefix = nil
-            current_key = nil
-            current_section = line[1..-2].strip
-            result[current_section] = {} of String => String
+          end
+          current_multi_line_prefix = nil
+          current_key = nil
+          current_section = line[1..-2].strip
+          result[current_section] = {} of String => String
         else
           raise "Invalid section header: #{line}"
         end

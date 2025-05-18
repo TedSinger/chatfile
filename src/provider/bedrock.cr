@@ -1,6 +1,6 @@
 require "aws/bedrock"
 require "aws/bedrock_events"
-require "./provider"
+require "./provider_abstract"
 require "../chat"
 require "../persona_config"
 require "./aws_creds"

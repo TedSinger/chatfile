@@ -1,21 +1,16 @@
 require "../persona_config"
+require "./anthropic"
+require "./bedrock"
+require "./openai"
+require "./openrouter"
+require "./provider_abstract"
 
 module Provider
-  abstract class Completer
-    abstract def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
-
-    abstract def initialize(env : Hash(String, String))
-  end
-
-  class CompleterError < Exception
-    def initialize(@status : HTTP::Status, @message : String)
-    end
-  end
-
   KNOWN_PROVIDERS = {
     "bedrock"    => {Bedrock, Bedrock::Completer},
     "openrouter" => {OpenRouter, OpenRouter::Completer},
     "openai"     => {OpenAI, OpenAI::Completer},
+    "anthropic"  => {Anthropic, Anthropic::Completer},
   }
 
   def self.get_completer(provider_name : String?, env : Hash(String, String)) : Provider::Completer

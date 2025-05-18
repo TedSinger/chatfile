@@ -1,5 +1,5 @@
 require "http/client"
-require "./provider"
+require "./provider_abstract"
 require "http/status"
 require "../chat"
 require "../persona_config"

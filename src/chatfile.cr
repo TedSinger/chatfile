@@ -3,6 +3,7 @@ require "./block"
 require "./persona"
 require "./completer/bedrock_complete"
 require "./completer/openrouter_complete"
+require "./completer/openai_completer"
 require "./chat"
 require "./completer/completer"
 require "./completer/aws_creds"
@@ -12,23 +13,29 @@ end
 
 VERSION = "0.1.0"
 
-def get_completer(use_bedrock : Bool, use_openrouter : Bool, env : Hash(String, String)) : Completer::Completer
+def get_completer(use_bedrock : Bool, use_openrouter : Bool, use_openai : Bool, env : Hash(String, String)) : Completer::Completer
   # first check for an explicit flag
   if use_bedrock
     puts "Using Bedrock because of --bedrock flag"
     return Completer::BedrockComplete::BedrockCompleter.new(Completer::AwsCreds.get_credentials)
   elsif use_openrouter
     puts "Using OpenRouter because of --openrouter flag"
-    return Completer::OpenRouterComplete::OpenRouterCompleter.new(env)
-    # otherwise check .can_access
-  elsif Completer::OpenRouterComplete.can_access
+    return Completer::OpenRouter::Completer.new(env)
+  elsif use_openai
+    puts "Using OpenAI because of --openai flag"
+    return Completer::OpenAI::Completer.new(env)
+  # otherwise check .can_access
+  elsif Completer::OpenRouter.can_access
     puts "Using OpenRouter because of .can_access"
-    return Completer::OpenRouterComplete::OpenRouterCompleter.new(env)
+    return Completer::OpenRouter::Completer.new(env)
   elsif Completer::AwsCreds.can_access
     puts "Using Bedrock because of .can_access"
     return Completer::BedrockComplete::BedrockCompleter.new(Completer::AwsCreds.get_credentials)
+  elsif Completer::OpenAI.can_access
+    puts "Using OpenAI because of .can_access"
+    return Completer::OpenAI::Completer.new(env)
   else
-    raise "No access to OpenRouter or Bedrock"
+    raise "No access to OpenRouter, Bedrock, or OpenAI"
   end
 end
 
@@ -106,12 +113,14 @@ def get_started
   puts "Edit example.chat and run it with `chatfile example.chat`"
   puts "Or if `chatfile` is in your PATH, you can run the chat directly with `./example.chat`"
 
-  if Completer::OpenRouterComplete.can_access
+  if Completer::OpenRouter.can_access
     puts "OpenRouter is available!"
   elsif Completer::AwsCreds.can_access
     puts "Bedrock is available!"
+  elsif Completer::OpenAI.can_access
+    puts "OpenAI is available!"
   else
-    puts "Neither OpenRouter nor Bedrock are available. Try setting OPENROUTER_API_KEY, or AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY"
+    puts "No providers are available. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or OPENAI_API_KEY"
   end
 end
 
@@ -142,12 +151,17 @@ OptionParser.parse do |parser|
     use_openrouter = true
   end
 
+  use_openai = false
+  parser.on("--openai", "Use OpenAI") do
+    use_openai = true
+  end
+
   parser.unknown_args do |args|
     if args.empty?
       puts parser
       exit(1)
     end
-    completer = get_completer(use_bedrock, use_openrouter, ENV.to_h)
+    completer = get_completer(use_bedrock, use_openrouter, use_openai, ENV.to_h)
     ret = process_chat_file(args[0], completer)
     exit(ret)
   end

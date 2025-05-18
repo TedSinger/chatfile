@@ -166,6 +166,15 @@ module Persona
                     "stop_sequences": "[]",
                     "top_p": "0.9",
                     "top_k": "250"
+                },
+                "openai": {
+                    "model": "gpt-4o-mini",
+                    "prompt": "You are a helpful assistant that can answer questions and help with tasks.",
+                    "temperature": "0.7",
+                    "max_tokens": "4096",
+                    "top_p": "1",
+                    "frequency_penalty": "0.0",
+                    "presence_penalty": "0.0"
                 }
             },
             "shortcuts": {}

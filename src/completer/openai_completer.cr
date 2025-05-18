@@ -1,15 +1,11 @@
-require "http/client"
-require "./completer"
-require "http/status"
-
-module Completer::OpenRouter
+module Completer::OpenAI
   class Completer < Completer
     def initialize(@env : Hash(String, String))
     end
 
     def complete(chat : Chat::Chat, persona_config : Persona::PersonaConfig) : Iterator(String)
-      client = HTTP::Client.new(URI.new("https", "openrouter.ai"))
-      persona = chat.last_block_persona("openrouter", persona_config)
+      client = HTTP::Client.new(URI.new("https", "api.openai.com"))
+      persona = chat.last_block_persona("openai", persona_config)
       puts persona
       conversation_body = JSON.build do |json|
         json.object do
@@ -18,7 +14,7 @@ module Completer::OpenRouter
             [
               {"role" => "system", "content" => persona.key_value_pairs["prompt"]},
               *chat.conversation.map { |role, content|
-                {"role" => OpenRouter.generic_role_to_openrouter_role(role), "content" => content}
+                {"role" => OpenAI.generic_role_to_openai_role(role), "content" => content}
               },
             ]
           )
@@ -26,20 +22,17 @@ module Completer::OpenRouter
           json.field("temperature", persona.key_value_pairs["temperature"].to_f)
           json.field("max_tokens", persona.key_value_pairs["max_tokens"].to_i)
           json.field("top_p", persona.key_value_pairs["top_p"].to_f)
-          json.field("top_k", persona.key_value_pairs["top_k"].to_i)
           json.field("frequency_penalty", persona.key_value_pairs["frequency_penalty"].to_f)
           json.field("presence_penalty", persona.key_value_pairs["presence_penalty"].to_f)
-          json.field("min_p", persona.key_value_pairs["min_p"].to_f)
-          json.field("repetition_penalty", persona.key_value_pairs["repetition_penalty"].to_f)
-          json.field("response_format", OpenRouter.generic_json_schema_to_openrouter_response_format(chat.response_format.not_nil!)) if chat.response_format
+          json.field("response_format", OpenAI.generic_json_schema_to_openai_response_format(chat.response_format.not_nil!)) if chat.response_format
         end
       end
 
       headers = HTTP::Headers.new
-      headers.add("Authorization", "Bearer #{@env["OPENROUTER_API_KEY"]}")
+      headers.add("Authorization", "Bearer #{@env["OPENAI_API_KEY"]}")
       headers.add("Content-Type", "application/json")
 
-      client.post("/api/v1/chat/completions", headers, conversation_body) do |response|
+      client.post("/v1/chat/completions", headers, conversation_body) do |response|
         if response.status_code == 200
           return EventStream.new(response.body_io)
         else
@@ -50,14 +43,14 @@ module Completer::OpenRouter
   end
 
   def self.can_access : Bool
-    if ENV.has_key?("OPENROUTER_API_KEY")
+    if ENV.has_key?("OPENAI_API_KEY")
       true
     else
       false
     end
   end
 
-  def self.generic_role_to_openrouter_role(role : String) : String
+  def self.generic_role_to_openai_role(role : String) : String
     case role
     when "user"
       "user"
@@ -68,7 +61,7 @@ module Completer::OpenRouter
     end
   end
 
-  def self.generic_json_schema_to_openrouter_response_format(json_schema : JSON::Any) : JSON::Any
+  def self.generic_json_schema_to_openai_response_format(json_schema : JSON::Any) : JSON::Any
     if json_schema.dig?("type") == "json_schema"
       json_schema
     elsif json_schema.dig?("type") == "object"
@@ -115,8 +108,6 @@ module Completer::OpenRouter
         rescue JSON::ParseException
           raise "Error: #{line}"
         end
-      elsif line.includes?("OPENROUTER PROCESSING")
-        nil
       else
         raise "Unknown line: #{line}"
       end

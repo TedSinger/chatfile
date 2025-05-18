@@ -104,12 +104,32 @@ def get_started
   end
 end
 
+def provider_from_flag(arg : String)
+  if Completer::KNOWN_PROVIDERS.includes?(arg)
+    arg
+  else
+    options = "{" + Completer::KNOWN_PROVIDERS.join(", ") + "}"
+    raise "Unknown provider: #{arg}. Try --provider=#{options}."
+  end
+end
+
 OptionParser.parse do |parser|
   parser.banner = "Usage: chatfile [arguments] <filename>"
 
   parser.on("--get-started", "Create a default config file and example `chatfile`") do
     get_started
     exit
+  end
+
+  flag_provider = nil
+  provider_help = "Use a specific provider. Known providers: #{Completer::KNOWN_PROVIDERS.join(", ")}\n  Respects env-var $CHATFILE_PROVIDER otherwise"
+  parser.on("-p PROVIDER", "--provider=PROVIDER", provider_help) do |arg|
+    begin
+      flag_provider = provider_from_flag(arg)
+    rescue e : Exception
+      puts "Error: #{e}"
+      exit(1)
+    end
   end
 
   parser.on("-v", "--version", "Show version") do
@@ -121,27 +141,13 @@ OptionParser.parse do |parser|
     puts parser
     exit
   end
-  use_bedrock = false
-  parser.on("--bedrock", "Use Bedrock") do
-    use_bedrock = true
-  end
-
-  use_openrouter = false
-  parser.on("--openrouter", "Use OpenRouter") do
-    use_openrouter = true
-  end
-
-  use_openai = false
-  parser.on("--openai", "Use OpenAI") do
-    use_openai = true
-  end
 
   parser.unknown_args do |args|
     if args.empty?
       puts parser
       exit(1)
     end
-    completer = Completer.get_completer(use_bedrock, use_openrouter, use_openai, ENV.to_h)
+    completer = Completer.get_completer(flag_provider, ENV.to_h)
     ret = process_chat_file(args[0], completer)
     exit(ret)
   end

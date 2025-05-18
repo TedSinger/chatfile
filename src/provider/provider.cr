@@ -10,42 +10,28 @@ module Provider
     end
   end
 
-  # Also serves as a default preference list
-  KNOWN_PROVIDERS = ["bedrock", "openrouter", "openai"]
+  KNOWN_PROVIDERS = {
+    "bedrock" => {Bedrock, Bedrock::Completer},
+    "openrouter" => {OpenRouter, OpenRouter::Completer},
+    "openai" => {OpenAI, OpenAI::Completer},
+  }
 
-  def self.get_completer(provider_name_from_flag : String?, env : Hash(String, String)) : Completer
-    if provider_name_from_flag
-      requested_provider_name = provider_name_from_flag
-      reason = "flag"
-    elsif env["CHATFILE_PROVIDER"]?
-      requested_provider_name = env["CHATFILE_PROVIDER"]
-      reason = "env var"
-    else
-      requested_provider_name = nil
-    end
-    if requested_provider_name == "bedrock"
-      puts "Using Bedrock because of #{reason}"
-      return Bedrock::Completer.new(env)
-    elsif requested_provider_name == "openrouter"
-      puts "Using OpenRouter because of #{reason}"
-      return OpenRouter::Completer.new(env)
-    elsif requested_provider_name == "openai"
-      puts "Using OpenAI because of #{reason}"
-      return OpenAI::Completer.new(env)
-    else
-      # otherwise check .can_access
-      if OpenRouter.can_access(env)
-        puts "Using OpenRouter because of .can_access"
-        return OpenRouter::Completer.new(env)
-      elsif Bedrock.can_access(env)
-        puts "Using Bedrock because of .can_access"
-        return Bedrock::Completer.new(env)
-      elsif OpenAI.can_access(env)
-        puts "Using OpenAI because of .can_access"
-        return OpenAI::Completer.new(env)
+  def self.get_completer(provider_name : String?, env : Hash(String, String)) : Provider::Completer
+    if provider_name
+      provider = KNOWN_PROVIDERS[provider_name].not_nil!
+      if provider[0].can_access(env)
+        return provider[1].new(env)
       else
-        raise "No access to OpenRouter, Bedrock, or OpenAI"
+        raise "No access to #{provider_name}"
       end
+    else
+      KNOWN_PROVIDERS.each do |provider_name, provider|
+        if provider[0].can_access(env)
+          puts "Using #{provider_name} because none was specified"
+          return provider[1].new(env)
+        end
+      end
+      raise "No provider found"
     end
   end
 end

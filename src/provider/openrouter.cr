@@ -55,7 +55,6 @@ module Provider::OpenRouter
     end
   end
 
-
   def self.generic_role_to_openrouter_role(role : String) : String
     case role
     when "user"

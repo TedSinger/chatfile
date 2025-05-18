@@ -91,25 +91,31 @@ def get_started
   puts "Created example.chat"
   puts "Edit example.chat and run it with `chatfile example.chat`"
   puts "Or if `chatfile` is in your PATH, you can run the chat directly with `./example.chat`"
-
-  if Provider::OpenRouter.can_access(ENV.to_h)
-    puts "OpenRouter is available!"
-  elsif Provider::Bedrock.can_access(ENV.to_h)
-    puts "Bedrock is available!"
-  elsif Provider::OpenAI.can_access(ENV.to_h)
-    puts "OpenAI is available!"
-  else
+  found_provider = false
+  Provider::KNOWN_PROVIDERS.each do |provider_name, provider|
+    if provider[0].can_access(ENV.to_h)
+      puts "#{provider_name} is available!"
+      found_provider = true
+    end
+  end
+  if !found_provider
     puts "No providers are available. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or OPENAI_API_KEY"
   end
 end
 
-def provider_from_flag(arg : String)
-  if Provider::KNOWN_PROVIDERS.includes?(arg)
-    arg
-  else
-    options = "{" + Provider::KNOWN_PROVIDERS.join(", ") + "}"
-    raise "Unknown provider: #{arg}. Try --provider=#{options}."
+def requested_provider(arg : String?, env : Hash(String, String))
+  options = "{" + Provider::KNOWN_PROVIDERS.keys.join(", ") + "}"
+  selection = arg || env["CHATFILE_PROVIDER"]?
+  reason = arg ? "flag" : "$CHATFILE_PROVIDER"
+  if selection
+    if Provider::KNOWN_PROVIDERS.keys.includes?(selection)
+      puts "Using #{selection} because of #{reason}"
+      selection
+    else
+      raise "Unknown provider: #{selection}. Try --provider=#{options}."
+    end
   end
+  nil
 end
 
 OptionParser.parse do |parser|
@@ -120,16 +126,12 @@ OptionParser.parse do |parser|
     exit
   end
 
-  flag_provider = nil
-  provider_help = "Use a specific provider. Known providers: #{Provider::KNOWN_PROVIDERS.join(", ")}\n  Respects env-var $CHATFILE_PROVIDER otherwise"
+  provider_name = nil
+  provider_help = "Use a specific provider. Known providers: #{Provider::KNOWN_PROVIDERS.keys.join(", ")}\n  Respects env-var $CHATFILE_PROVIDER otherwise"
   parser.on("-p PROVIDER", "--provider=PROVIDER", provider_help) do |arg|
-    begin
-      flag_provider = provider_from_flag(arg)
-    rescue e : Exception
-      puts "Error: #{e}"
-      exit(1)
-    end
+    provider_name = arg
   end
+  provider = requested_provider(provider_name, ENV.to_h)
 
   parser.on("-v", "--version", "Show version") do
     puts "Chatfile version #{VERSION}"
@@ -146,7 +148,12 @@ OptionParser.parse do |parser|
       puts parser
       exit(1)
     end
-    completer = Provider.get_completer(flag_provider, ENV.to_h)
+    begin
+      completer = Provider.get_completer(provider, ENV.to_h)
+    rescue e : Exception
+      puts "Error: #{e}"
+      exit(1)
+    end
     ret = process_chat_file(args[0], completer)
     exit(ret)
   end

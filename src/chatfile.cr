@@ -50,8 +50,12 @@ def process_chat_file(filename : String, completer : Completer::Completer)
     return 1
   end
   persona_config = Persona::PersonaConfig.default_config
-
-  chunks = completer.complete(chat, persona_config)
+  begin
+    chunks = completer.complete(chat, persona_config)
+  rescue e : Completer::CompleterError
+    puts "Error: #{e}"
+    return 1
+  end
 
   File.open(filename, "a") do |file|
     # FIXME: This is all abstraction-violating hackery
@@ -84,6 +88,7 @@ def get_started
       "defaults_by_provider" => {
         "openrouter" => {"model" => "openai/gpt-4-turbo-preview", "max_tokens" => "1000"},
         "bedrock"    => {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0"},
+        "openai"     => {"model" => "gpt-4o-mini", "max_tokens" => "1000"},
       },
       "shortcuts" => {"shakespeare" => {"prompt" => "You are the bard of Avon, loquacious poet", "temperature" => "1.5"}, "spock" => {"prompt" => "You are Spock, the logical Vulcan", "temperature" => "0.2"}},
     }.to_pretty_json)

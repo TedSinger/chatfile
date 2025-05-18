@@ -97,8 +97,8 @@ module Persona
     def resolve(config : PersonaConfig::PersonaConfig)
       persona = Persona.zero
       @keywords.each do |keyword|
-        if config[keyword]?
-          persona = persona << config[keyword]
+        if config["shortcut:#{keyword}"]?
+          persona = persona << config["shortcut:#{keyword}"]
         end
       end
       @key_value_pairs.each do |key, value|

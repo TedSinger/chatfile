@@ -100,12 +100,12 @@ end
 
 def requested_provider(arg : String?, env : Hash(String, String))
   options = "{" + Provider::KNOWN_PROVIDERS.keys.join(", ") + "}"
-  selection = arg || env["CHATFILE_PROVIDER"]?
+  selection = arg ? arg : env["CHATFILE_PROVIDER"]?
   reason = arg ? "flag" : "$CHATFILE_PROVIDER"
   if selection
     if Provider::KNOWN_PROVIDERS.keys.includes?(selection)
       puts "Using #{selection} because of #{reason}"
-      selection
+      return selection
     else
       raise "Unknown provider: #{selection}. Try --provider=#{options}."
     end
@@ -126,7 +126,6 @@ OptionParser.parse do |parser|
   parser.on("-p PROVIDER", "--provider=PROVIDER", provider_help) do |arg|
     provider_name = arg
   end
-  provider = requested_provider(provider_name, ENV.to_h)
 
   parser.on("-v", "--version", "Show version") do
     puts "Chatfile version #{VERSION}"
@@ -144,6 +143,7 @@ OptionParser.parse do |parser|
       exit(1)
     end
     begin
+      provider = requested_provider(provider_name, ENV.to_h)
       completer = Provider.get_completer(provider, ENV.to_h)
     rescue e : Exception
       puts "Error: #{e}"

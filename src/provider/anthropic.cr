@@ -118,6 +118,7 @@ module Provider::Anthropic
     # data: {"type": "content_block_delta", "index": 0, "delta": {"type": "thinking_delta", "thinking": "\n2. 453 = 400 + 50 + 3"}}
 
     def initialize(@io : IO)
+      @thinking = false
     end
 
     def maybe_next
@@ -130,7 +131,17 @@ module Provider::Anthropic
       end
       if line.starts_with?("data: ")
         json = JSON.parse(line[6..-1])
-        if json.dig?("type") == "message_stop"
+        if json.dig?("type") == "content_block_start"
+          if json.dig?("content_block", "type") == "thinking"
+            @thinking = true
+            return "<thinking>"
+          elsif @thinking
+            @thinking = false
+            return "</thinking>\n"
+          else
+            return nil
+          end
+        elsif json.dig?("type") == "message_stop"
           return stop
         elsif delta = json.dig?("delta", "text")
           return delta.as_s

@@ -9,6 +9,18 @@ module Provider::OpenRouter
     env.has_key?("OPENROUTER_API_KEY")
   end
 
+  SIMPLE_PARAMS = [
+    {"model", "model", String},
+    {"max_tokens", "max_tokens", Int32},
+    {"temperature", "temperature", Float64},
+    {"top_p", "top_p", Float64},
+    {"top_k", "top_k", Int32},
+    {"frequency_penalty", "frequency_penalty", Float64},
+    {"presence_penalty", "presence_penalty", Float64},
+    {"min_p", "min_p", Float64},
+    {"repetition_penalty", "repetition_penalty", Float64},
+  ]
+
   class Completer < Completer
     def initialize(@env : Hash(String, String))
     end
@@ -19,7 +31,6 @@ module Provider::OpenRouter
       puts persona
       conversation_body = JSON.build do |json|
         json.object do
-          json.field("model", persona.key_value_pairs["model"])
           json.field("messages",
             [
               {"role" => "system", "content" => persona.key_value_pairs["prompt"]},
@@ -29,14 +40,7 @@ module Provider::OpenRouter
             ]
           )
           json.field("stream", true)
-          json.field("temperature", persona.key_value_pairs["temperature"].to_f)
-          json.field("max_tokens", persona.key_value_pairs["max_tokens"].to_i)
-          json.field("top_p", persona.key_value_pairs["top_p"].to_f)
-          json.field("top_k", persona.key_value_pairs["top_k"].to_i)
-          json.field("frequency_penalty", persona.key_value_pairs["frequency_penalty"].to_f)
-          json.field("presence_penalty", persona.key_value_pairs["presence_penalty"].to_f)
-          json.field("min_p", persona.key_value_pairs["min_p"].to_f)
-          json.field("repetition_penalty", persona.key_value_pairs["repetition_penalty"].to_f)
+          persona.enrich_json(json, SIMPLE_PARAMS)
           json.field("response_format", OpenRouter.generic_json_schema_to_openrouter_response_format(chat.response_format.not_nil!)) if chat.response_format
         end
       end

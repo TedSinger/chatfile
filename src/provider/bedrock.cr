@@ -10,6 +10,13 @@ module Provider::Bedrock
     AwsCreds.can_access(env)
   end
 
+  SIMPLE_PARAMS = [
+    {"max_tokens", "max_tokens", Int32},
+    {"stop_sequences", "stop_sequences", JSON::Any},
+    {"temperature", "temperature", Float64},
+    {"top_p", "top_p", Float64},
+  ]
+
   class Completer < Completer
     getter credentials : Hash(String, String?)
 
@@ -24,10 +31,7 @@ module Provider::Bedrock
         json.object do
           json.field "inferenceConfig" do
             json.object do
-              json.field "maxTokens", (persona.key_value_pairs["max_tokens"]).to_i
-              json.field "stopSequences", JSON.parse(persona.key_value_pairs["stop_sequences"])
-              json.field "temperature", (persona.key_value_pairs["temperature"]).to_f
-              json.field "topP", (persona.key_value_pairs["top_p"]).to_f
+              persona.enrich_json(json, SIMPLE_PARAMS)
             end
           end
           json.field "messages", chat.conversation.map { |role, content|

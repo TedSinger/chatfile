@@ -9,6 +9,14 @@ module Provider::Anthropic
     env.has_key?("ANTHROPIC_API_KEY")
   end
 
+  SIMPLE_PARAMS = [
+    {"model", "model", String},
+    {"max_tokens", "max_tokens", Int32},
+    {"system", "prompt", String},
+    {"temperature", "temperature", Float64},
+    {"stop_sequences", "stop_sequences", JSON::Any},
+  ]
+
   class Completer < Completer
     def initialize(@env : Hash(String, String))
     end
@@ -40,11 +48,7 @@ module Provider::Anthropic
       } : {"type" => "disabled"}
       conversation_body = JSON.build do |json|
         json.object do
-          json.field("model", persona.key_value_pairs["model"])
-          json.field("max_tokens", persona.key_value_pairs["max_tokens"].to_i)
-          json.field("system", persona.key_value_pairs["prompt"])
-          json.field("temperature", persona.key_value_pairs["temperature"].to_f)
-          json.field("stop_sequences", JSON.parse(persona.key_value_pairs["stop_sequences"]))
+          persona.enrich_json(json, SIMPLE_PARAMS)
           json.field("thinking", thinking)
           json.field("messages",
             chat.conversation.map { |role, content|

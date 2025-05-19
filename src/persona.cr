@@ -1,4 +1,5 @@
 require "./persona_config"
+require "json"
 
 module Persona
   module Role
@@ -35,6 +36,25 @@ module Persona
         {} of String => String,
         nil
       )
+    end
+
+    def enrich_json(json : JSON::Builder, simple_params : Array(Tuple(String, String, String.class | Int32.class | Float64.class | JSON::Any.class)))
+      simple_params.each do |json_key, persona_key, type|
+        if @key_value_pairs[persona_key]?
+          value = @key_value_pairs[persona_key]
+          if type == String
+            json.field(json_key, value)
+          elsif type == Int32
+            json.field(json_key, value.to_i)
+          elsif type == Float64
+            json.field(json_key, value.to_f)
+          elsif type == JSON::Any
+            json.field(json_key, JSON.parse(value))
+          else
+            raise NotImplementedError.new("Type #{type} not implemented")
+          end
+        end
+      end
     end
   end
 

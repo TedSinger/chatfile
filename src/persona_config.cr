@@ -14,6 +14,8 @@ module PersonaConfig
   def self.maybe_create_default_config
     default = self.default_config
     if !File.exists?(self.default_path)
+      config_dir = Path.new(self.default_path).dirname
+      Dir.mkdir_p(config_dir)
       File.write(self.default_path, self.default_config_text)
       puts "Created #{self.default_path}"
     end

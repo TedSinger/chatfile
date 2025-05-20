@@ -1,12 +1,14 @@
 # chatfile
 
+Plain-text AI
+
 ![demo](./demo.gif)
 
 ## Why?
 
-AI input is text. AI output is text. Text goes in a text file. Text files go in a text editor.
+AI input is text. AI output is text. Text belongs in a text file. Text files belong in a text editor.
 
-Seems obvious to me.
+It just makes sense.
 
 ## What?
 
@@ -26,17 +28,27 @@ What motivation compelled the RoosterBot to trespass across the hyperlane? To ac
 
 ## Details
 
-- Use models on OpenRouter or AWS Bedrock
-- `~/.config/chatfile/personas.json` 
- - Defines model parameter defaults (including the system prompt) per provider
-   - `"defaults_by_provider": {"bedrock": {"model": "us.anthropic.claude-3-7-sonnet-20250219-v1:0"}}`
- - Defines "shortcuts" of parameter settings to include as needed
-   - `"shortcuts": {"shakespeare": {"prompt": "You are William Shakespeare, the Bard of Avon", "temperature": "1.2"}}`
-- Blocks are delimited by lines starting with `#@`, called "persona lines"
-  - Shortcuts in a persona line `#@ shakespeare` will merge the parameters from the config file
-  - `#@ $` denotes a "shell block"
-    - Commands in the block will be executed and the output provided to the model
-    - Add a path (`#@ $ ~/projects/`) to change the working directory for the shell commands
-    - (This is *not* a tool-use system - only commands that you write are executed)
-  - Force structured output by putting a json schema in a block tagged `#@ {}`
-    - (Hint: ask the LLM to write one, then change the block tag)
+- Use models on OpenRouter, AWS Bedrock, OpenAI, or Anthropic
+- Configure prompts, providers, models, parameters in `~/.config/chatfile/personas.ini` 
+```ini
+[global]
+prompt = You are a terse and efficient assistant
+provider = bedrock
+model = us.anthropic.claude-3-7-sonnet-20250219-v1:0
+temperature = 0.7
+
+[shakespeare]
+prompt = You are William Shakespeare, the Bard of Avon,
+  loquacious poet, author not only of classic plays in
+  English, but of the English language itself
+temperature = 0.7
+provider = openrouter
+model = meta-llama/llama-3.3-8b-instruct:free
+```
+- Separate blocks with "persona lines", starting with `#@`
+- Reference shortcuts in a persona line `#@ shakespeare` to merge the parameters from the config file
+- Give context from commands with "shell blocks", labeled `#@ $`
+  - Commands in the block will be executed and the output provided to the model
+  - Add a path (`#@ $ ~/projects/`) to change the working directory for the shell commands
+- Force structured output by putting a json schema in a block tagged `#@ {}`
+  - (Hint: ask the LLM to write one, then change the block tag)

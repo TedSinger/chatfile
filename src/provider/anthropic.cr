@@ -23,27 +23,18 @@ module Provider::Anthropic
     def initialize(@env : Hash(String, String))
     end
 
-    def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
-      # curl https://api.anthropic.com/v1/messages \
-      #     --header "x-api-key: $ANTHROPIC_API_KEY" \
-      #     --header "anthropic-version: 2023-06-01" \
-      #     --header "content-type: application/json" \
-      #     --data \
-      # '{
-      #     "model": "claude-3-7-sonnet-20250219",
-      #     "max_tokens": 1024,
-      #     "messages": [
-      #         {"role": "user", "content": "Hello, world"}
-      #     ]
-      # }'
+    def default_model : String
+      "claude-3-7-sonnet-20250219"
+    end
+
+    def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
+      persona = Persona::Persona.zero << {"model" => default_model} << persona
 
       client = HTTP::Client.new(URI.new("https", "api.anthropic.com"))
       headers = HTTP::Headers.new
       headers.add("x-api-key", @env["ANTHROPIC_API_KEY"])
       headers.add("anthropic-version", "2023-06-01")
       headers.add("content-type", "application/json")
-      persona = chat.last_block_persona("anthropic", persona_config)
-      puts persona
       thinking = persona.key_value_pairs["thinking.type"]? == "enabled" ? {
         "budget_tokens" => persona.key_value_pairs["thinking.budget_tokens"].to_i,
         "type"          => "enabled",
@@ -65,13 +56,12 @@ module Provider::Anthropic
               end
             end
             json.field("tools", [
-              Anthropic.generic_json_schema_to_anthropic_response_format(chat.response_format.not_nil!)
+              Anthropic.generic_json_schema_to_anthropic_response_format(chat.response_format.not_nil!),
             ])
           end
           json.field("thinking", thinking) if chat.response_format.nil?
         end
       end
-      puts conversation_body
 
       client.post("/v1/messages", headers, conversation_body) do |response|
         if response.status_code == 200
@@ -125,6 +115,7 @@ module Provider::Anthropic
       raise "Don't know how to convert JSON schema to Anthropic response format: #{json_schema}"
     end
   end
+
   class EventStream
     include Iterator(String)
 

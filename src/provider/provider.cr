@@ -13,22 +13,12 @@ module Provider
     "anthropic"  => {Anthropic, Anthropic::Completer},
   }
 
-  def self.get_completer(provider_name : String?, env : Hash(String, String)) : Provider::Completer
-    if provider_name
-      provider = KNOWN_PROVIDERS[provider_name].not_nil!
+  def self.get_any_available(env : Hash(String, String)) : String
+    KNOWN_PROVIDERS.each do |provider_name, provider|
       if provider[0].can_access(env)
-        return provider[1].new(env)
-      else
-        raise "No access to #{provider_name}"
+        return provider_name
       end
-    else
-      KNOWN_PROVIDERS.each do |provider_name, provider|
-        if provider[0].can_access(env)
-          puts "Using #{provider_name} because none was specified"
-          return provider[1].new(env)
-        end
-      end
-      raise "No provider found"
     end
+    raise "No provider found. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY"
   end
 end

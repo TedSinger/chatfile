@@ -107,8 +107,8 @@ module Chat
       conversation
     end
 
-    def last_block_persona(provider : String, config : PersonaConfig::PersonaConfig)
-      default_persona = (Persona::Persona.zero << config["global"]) << config["provider:#{provider}"]
+    def last_block_persona(config : PersonaConfig::PersonaConfig)
+      default_persona = (Persona::Persona.zero << config["global"])
       meta_persona_line = persona_line_from_meta_blocks()
       block_persona_line = Persona::PersonaLine.parse_persona_line(@blocks[-1].persona_line)
 

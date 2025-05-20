@@ -22,10 +22,13 @@ module Provider::OpenAI
     def initialize(@env : Hash(String, String))
     end
 
-    def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
+    def default_model : String
+      "gpt-4o-mini"
+    end
+
+    def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
+      persona = Persona::Persona.zero << {"model" => default_model} << persona
       client = HTTP::Client.new(URI.new("https", "api.openai.com"))
-      persona = chat.last_block_persona("openai", persona_config)
-      puts persona
       conversation_body = JSON.build do |json|
         json.object do
           persona.enrich_json(json, SIMPLE_PARAMS)

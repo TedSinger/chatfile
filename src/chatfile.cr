@@ -15,7 +15,7 @@ end
 
 VERSION = "0.1.0"
 
-def process_chat_file(filename : String, completer : Provider::Completer)
+def process_chat_file(filename : String)
   text = File.read(filename)
   blocks = Block.blocks_from_text(text)
   chat = Chat::Chat.new(blocks)
@@ -28,9 +28,11 @@ def process_chat_file(filename : String, completer : Provider::Completer)
     puts "Last block is an AI block. Nothing to do"
     return 0
   end
-  persona_config = PersonaConfig.get
+  persona = chat.last_block_persona(PersonaConfig.get)
   begin
-    chunks = completer.complete(chat, persona_config)
+    provider = persona.key_value_pairs["provider"]? || Provider.get_any_available(ENV.to_h)
+    completer = Provider::KNOWN_PROVIDERS[provider][1].new(ENV.to_h)
+    chunks = completer.complete(chat, persona)
   rescue e : Provider::CompleterError
     puts "Error: #{e}"
     return 1
@@ -58,11 +60,8 @@ def process_chat_file(filename : String, completer : Provider::Completer)
 end
 
 def get_started
-  config_dir = Path["~/.config/chatfile"].expand(home: true)
-  Dir.mkdir_p(config_dir)
-  config_file = config_dir / "personas.json"
-
   PersonaConfig.maybe_create_default_config
+  puts "Created #{PersonaConfig.default_path}"
 
   unless File.exists?("example.chat")
     File.write("example.chat", <<-CHAT
@@ -95,37 +94,16 @@ def get_started
     end
   end
   if !found_provider
-    puts "No providers are available. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, or OPENAI_API_KEY"
+    puts "No providers are available. Try setting OPENROUTER_API_KEY, AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY"
   end
-end
-
-def requested_provider(arg : String?, env : Hash(String, String))
-  options = "{" + Provider::KNOWN_PROVIDERS.keys.join(", ") + "}"
-  selection = arg ? arg : env["CHATFILE_PROVIDER"]?
-  reason = arg ? "flag" : "$CHATFILE_PROVIDER"
-  if selection
-    if Provider::KNOWN_PROVIDERS.keys.includes?(selection)
-      puts "Using #{selection} because of #{reason}"
-      return selection
-    else
-      raise "Unknown provider: #{selection}. Try --provider=#{options}."
-    end
-  end
-  nil
 end
 
 OptionParser.parse do |parser|
-  parser.banner = "Usage: chatfile [arguments] <filename>"
+  parser.banner = "Usage: chatfile <filename>"
 
   parser.on("--get-started", "Create a default config file and example `chatfile`") do
     get_started
     exit
-  end
-
-  provider_name = nil
-  provider_help = "Use a specific provider. Known providers: #{Provider::KNOWN_PROVIDERS.keys.join(", ")}\n  Respects env-var $CHATFILE_PROVIDER otherwise"
-  parser.on("-p PROVIDER", "--provider=PROVIDER", provider_help) do |arg|
-    provider_name = arg
   end
 
   parser.on("-v", "--version", "Show version") do
@@ -143,14 +121,7 @@ OptionParser.parse do |parser|
       puts parser
       exit(1)
     end
-    begin
-      provider = requested_provider(provider_name, ENV.to_h)
-      completer = Provider.get_completer(provider, ENV.to_h)
-    rescue e : Exception
-      puts "Error: #{e}"
-      exit(1)
-    end
-    ret = process_chat_file(args[0], completer)
+    ret = process_chat_file(args[0])
     exit(ret)
   end
 end

@@ -24,9 +24,12 @@ module Provider::Bedrock
       @credentials = AwsCreds.get_credentials(env)
     end
 
-    def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
-      persona = chat.last_block_persona("bedrock", persona_config)
-      puts persona
+    def default_model : String
+      "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    end
+
+    def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
+      persona = Persona::Persona.zero << {"model" => default_model} << persona
       conversation_body = JSON.build do |json|
         json.object do
           json.field "inferenceConfig" do

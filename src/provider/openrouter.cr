@@ -25,10 +25,13 @@ module Provider::OpenRouter
     def initialize(@env : Hash(String, String))
     end
 
-    def complete(chat : Chat::Chat, persona_config : PersonaConfig::PersonaConfig) : Iterator(String)
+    def default_model : String
+      "x-ai/grok-3-mini-beta"
+    end
+
+    def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
+      persona = Persona::Persona.zero << {"model" => default_model} << persona
       client = HTTP::Client.new(URI.new("https", "openrouter.ai"))
-      persona = chat.last_block_persona("openrouter", persona_config)
-      puts persona
       conversation_body = JSON.build do |json|
         json.object do
           json.field("messages",

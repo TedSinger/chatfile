@@ -13,7 +13,7 @@ require "./provider/aws_creds"
 module Chatfile
 end
 
-VERSION = "0.1.0"
+VERSION = "wffm"
 
 def process_chat_file(filename : String)
   text = File.read(filename)

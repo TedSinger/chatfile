@@ -87,7 +87,7 @@ module Persona
       PersonaLine.new(keywords, key_value_pairs)
     end
 
-    def inferred_role
+    def explicit_role
       if @keywords.includes?(Role::USER)
         Role::USER
       elsif @keywords.includes?(Role::JSON_RESPONSE_FORMAT)

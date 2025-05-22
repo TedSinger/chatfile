@@ -21,27 +21,27 @@ module Chat
       blocks.each_with_index do |block, index|
         persona_line = Persona::PersonaLine.parse_persona_line(block.persona_line)
 
-        if index == 0
-          roles << Persona::Role::META
-        elsif index == 1
-          roles << Persona::Role::USER
-          previous_role = Persona::Role::USER
-        elsif persona_line.inferred_role == Persona::Role::USER
-          roles << Persona::Role::USER
-          previous_role = Persona::Role::USER
-        elsif persona_line.inferred_role == Persona::Role::SHELL
+        if persona_line.explicit_role == Persona::Role::SHELL
           roles << Persona::Role::SHELL
           previous_role = Persona::Role::USER
-        elsif persona_line.inferred_role == Persona::Role::META
+        elsif persona_line.explicit_role == Persona::Role::USER
+          roles << Persona::Role::USER
+          previous_role = Persona::Role::USER
+        elsif persona_line.explicit_role == Persona::Role::META
           roles << Persona::Role::META
-        elsif persona_line.inferred_role == Persona::Role::JSON_RESPONSE_FORMAT
+        elsif persona_line.explicit_role == Persona::Role::JSON_RESPONSE_FORMAT
           roles << Persona::Role::JSON_RESPONSE_FORMAT
-        elsif persona_line.inferred_role == Persona::Role::AI
+        elsif persona_line.explicit_role == Persona::Role::AI
           roles << Persona::Role::AI
           previous_role = Persona::Role::AI
         elsif previous_role == Persona::Role::USER
           roles << Persona::Role::AI
           previous_role = Persona::Role::AI
+        elsif index == 0
+          roles << Persona::Role::META
+        elsif index == 1
+          roles << Persona::Role::USER
+          previous_role = Persona::Role::USER
         else
           roles << Persona::Role::USER
           previous_role = Persona::Role::USER
@@ -109,10 +109,9 @@ module Chat
 
     def last_block_persona(config : PersonaConfig::PersonaConfig)
       default_persona = (Persona::Persona.zero << config["global"])
-      meta_persona_line = persona_line_from_meta_blocks()
       block_persona_line = Persona::PersonaLine.parse_persona_line(@blocks[-1].persona_line)
 
-      deliberate_persona = meta_persona_line << block_persona_line
+      deliberate_persona = persona_line_from_meta_blocks() << block_persona_line
       result = default_persona << deliberate_persona.resolve(config)
       result
     end

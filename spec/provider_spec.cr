@@ -3,7 +3,7 @@ require "../src/persona"
 require "../src/provider"
 require "../src/block"
 
-describe "Integration" do
+describe "Provider" do
   it "works with all providers" do
     providers = ["openai", "bedrock", "openrouter", "anthropic"]
     providers.each do |provider|

@@ -22,11 +22,11 @@ describe Mini do
     temperature = 0.7
     INI
     ).should eq({
-      "global" => {"prompt" => "test"},
+      "global"          => {"prompt" => "test"},
       "provider:openai" => {
-        "model" => "gpt-4",
-        "temperature" => "0.7"
-      }
+        "model"       => "gpt-4",
+        "temperature" => "0.7",
+      },
     })
   end
 
@@ -39,7 +39,7 @@ describe Mini do
     INI
     ).should eq({
       "section1" => {} of String => String,
-      "section2" => {"key" => "value"}
+      "section2" => {"key" => "value"},
     })
   end
 
@@ -54,8 +54,8 @@ describe Mini do
     ).should eq({
       "global" => {
         "prompt" => "first line\nsecond line\nthird line",
-        "key2" => "value2"
-      }
+        "key2"   => "value2",
+      },
     })
   end
 
@@ -67,7 +67,7 @@ describe Mini do
     key = value
     INI
     ).should eq({
-      "section" => {"key" => "value"}
+      "section" => {"key" => "value"},
     })
   end
 

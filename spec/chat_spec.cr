@@ -55,4 +55,17 @@ describe "Chat" do
     text.valid_encoding?.should be_true
     text.should match(/hello\nworld/)
   end
+  it "infers the last block's persona as USER if ambiguous" do
+    chat_text = <<-INI
+    #@ $
+    echo "hello"
+    #@
+    what was the last command?
+    INI
+
+    blocks = Block.blocks_from_text(chat_text)
+    chat = Chat::Chat.new(blocks)
+    result = chat.roles
+    result.should eq([Persona::Role::META, Persona::Role::SHELL, Persona::Role::USER])
+  end
 end

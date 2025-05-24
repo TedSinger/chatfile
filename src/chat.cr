@@ -34,7 +34,7 @@ module Chat
         elsif persona_line.explicit_role == Persona::Role::AI
           roles << Persona::Role::AI
           previous_role = Persona::Role::AI
-        elsif previous_role == Persona::Role::USER
+        elsif previous_role == Persona::Role::USER && index != blocks.size - 1
           roles << Persona::Role::AI
           previous_role = Persona::Role::AI
         elsif index == 0

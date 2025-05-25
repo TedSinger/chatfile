@@ -24,12 +24,12 @@ module Provider::Anthropic
     end
 
     def default_model : String
-      "claude-3-7-sonnet-20250219"
+      "claude-opus-4-20250514"
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
       persona = Persona::Persona.zero << {"model" => default_model} << persona
-
+      puts "Using model: #{persona.key_value_pairs["model"]}"
       client = HTTP::Client.new(URI.new("https", "api.anthropic.com"))
       headers = HTTP::Headers.new
       headers.add("x-api-key", @env["ANTHROPIC_API_KEY"])

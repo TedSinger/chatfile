@@ -23,20 +23,21 @@ module Provider::Anthropic
     def initialize(@env : Hash(String, String))
     end
 
-    def default_model : String
-      "claude-opus-4-20250514"
+    def defaults : Persona::Persona
+      Persona::Persona.from_hash("anthropic default", {"model" => "claude-3-7-sonnet-20250219"})
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
-      persona = Persona::Persona.zero << {"model" => default_model} << persona
-      puts "Using model: #{persona.key_value_pairs["model"]}"
+      persona = defaults << persona
+      puts "Using persona:"
+      puts persona.to_s
       client = HTTP::Client.new(URI.new("https", "api.anthropic.com"))
       headers = HTTP::Headers.new
       headers.add("x-api-key", @env["ANTHROPIC_API_KEY"])
       headers.add("anthropic-version", "2023-06-01")
       headers.add("content-type", "application/json")
       thinking = persona.key_value_pairs["thinking.type"]? == "enabled" ? {
-        "budget_tokens" => persona.key_value_pairs["thinking.budget_tokens"].to_i,
+        "budget_tokens" => persona.key_value_pairs["thinking.budget_tokens"][1].to_i,
         "type"          => "enabled",
       } : {"type" => "disabled"}
       conversation_body = JSON.build do |json|

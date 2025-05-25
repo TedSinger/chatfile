@@ -11,10 +11,17 @@ module Persona
   end
 
   struct Persona
-    getter key_value_pairs : Hash(String, String)
+    getter key_value_pairs : Hash(String, Tuple(String, String))
     getter role : Role?
 
-    def initialize(@key_value_pairs : Hash(String, String), @role : Role? = nil)
+    def initialize(@key_value_pairs : Hash(String, Tuple(String, String)), @role : Role? = nil)
+    end
+
+    def self.from_hash(source : String, hash : Hash(String, String))
+      Persona.new(
+        hash.reduce({} of String => Tuple(String, String)) { |acc, (key, value)| acc[key] = {source, value}; acc },
+        nil
+      )
     end
 
     def <<(other : Persona)
@@ -24,24 +31,23 @@ module Persona
       )
     end
 
-    def <<(other : Hash(String, String))
+    def self.zero
       Persona.new(
-        @key_value_pairs.merge(other),
-        @role
+        {} of String => Tuple(String, String),
+        nil
       )
     end
 
-    def self.zero
-      Persona.new(
-        {} of String => String,
-        nil
-      )
+    def to_s
+      stuff = @key_value_pairs.map { |key, value| {key, value[0], value[1].size > 40 ? value[1][0..40] + "..." : value[1]} }
+      stuff = stuff.sort_by { |key, source, value| {key, source} }
+      stuff.map { |key, source, value| "#{key}: #{value} (from #{source})" }.join("\n")
     end
 
     def enrich_json(json : JSON::Builder, simple_params : Array(Tuple(String, String, String.class | Int32.class | Float64.class | JSON::Any.class)))
       simple_params.each do |json_key, persona_key, type|
         if @key_value_pairs[persona_key]?
-          value = @key_value_pairs[persona_key]
+          source, value = @key_value_pairs[persona_key]
           if type == String
             json.field(json_key, value)
           elsif type == Int32
@@ -114,16 +120,14 @@ module Persona
       PersonaLine.new([] of String, {} of String => String)
     end
 
-    def resolve(config : PersonaConfig::PersonaConfig)
+    def resolve(kind : String, config : PersonaConfig::PersonaConfig)
       persona = Persona.zero
       @keywords.each do |keyword|
         if config[keyword]?
-          persona = persona << config[keyword]
+          persona = persona << Persona.from_hash(keyword, config[keyword])
         end
       end
-      @key_value_pairs.each do |key, value|
-        persona = persona << {key => value}
-      end
+      persona = persona << Persona.from_hash(kind, @key_value_pairs)
       persona
     end
   end

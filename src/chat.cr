@@ -50,7 +50,7 @@ module Chat
       roles
     end
 
-    private def persona_line_from_meta_blocks
+    private def persona_line_from_meta_blocks : Persona::PersonaLine
       meta_blocks = @blocks.zip(@roles).select { |block, role| role == Persona::Role::META }
       meta_blocks.map do |block, role|
         Persona::PersonaLine.parse_persona_line(block.persona_line)
@@ -95,11 +95,12 @@ module Chat
     end
 
     def last_block_persona(config : PersonaConfig::PersonaConfig)
-      default_persona = (Persona::Persona.zero << config["global"])
+      global_persona = Persona::Persona.from_hash("global", config["global"])
       block_persona_line = Persona::PersonaLine.parse_persona_line(@blocks[-1].persona_line)
+      block_persona = block_persona_line.resolve("block", config)
+      meta_persona = persona_line_from_meta_blocks().resolve("meta", config)
 
-      deliberate_persona = persona_line_from_meta_blocks() << block_persona_line
-      result = default_persona << deliberate_persona.resolve(config)
+      result = global_persona << meta_persona << block_persona
       result
     end
 

@@ -25,9 +25,9 @@ describe "Persona" do
     blocks = Block.blocks_from_text(chat_text)
     chat = Chat::Chat.new(blocks)
     persona = chat.last_block_persona(config)
-    persona.key_value_pairs["something_global"].should eq("something_global")
-    persona.key_value_pairs["something_global_and_used_shortcut"].should eq("used_shortcut")
-    persona.key_value_pairs["something_global_and_unused_shortcut"].should eq("global")
+    persona.key_value_pairs["something_global"].should eq({"global", "something_global"})
+    persona.key_value_pairs["something_global_and_used_shortcut"].should eq({"used_shortcut", "used_shortcut"})
+    persona.key_value_pairs["something_global_and_unused_shortcut"].should eq({"global", "global"})
   end
 
   it "uses only the last block's shortcut" do
@@ -53,7 +53,7 @@ describe "Persona" do
     blocks = Block.blocks_from_text(chat_text)
     chat = Chat::Chat.new(blocks)
     persona = chat.last_block_persona(config)
-    persona.key_value_pairs["something_global"].should eq("last_block")
+    persona.key_value_pairs["something_global"].should eq({"last_block", "last_block"})
   end
   it "includes k=v pairs in the last block" do
     chat_text = <<-INI
@@ -74,7 +74,7 @@ describe "Persona" do
     blocks = Block.blocks_from_text(chat_text)
     chat = Chat::Chat.new(blocks)
     persona = chat.last_block_persona(config)
-    persona.key_value_pairs["k"].should eq("pair")
+    persona.key_value_pairs["k"].should eq({"block", "pair"})
   end
   it "propagates anything from META blocks" do
     chat_text = <<-INI
@@ -97,7 +97,7 @@ describe "Persona" do
     blocks = Block.blocks_from_text(chat_text)
     chat = Chat::Chat.new(blocks)
     persona = chat.last_block_persona(config)
-    persona.key_value_pairs["k"].should eq("meta1")
-    persona.key_value_pairs["l"].should eq("meta4")
+    persona.key_value_pairs["k"].should eq({"last_block", "last_block"})
+    persona.key_value_pairs["l"].should eq({"meta", "meta4"})
   end
 end

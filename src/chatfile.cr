@@ -30,7 +30,7 @@ def process_chat_file(filename : String)
   end
   persona = chat.last_block_persona(PersonaConfig.get)
   begin
-    provider = persona.key_value_pairs["provider"]? || Provider.get_any_available(ENV.to_h)
+    _, provider = persona.key_value_pairs["provider"]? || {nil, Provider.get_any_available(ENV.to_h)}
     completer = Provider::KNOWN_PROVIDERS[provider][1].new(ENV.to_h)
     chunks = completer.complete(chat, persona)
   rescue e : Provider::CompleterError

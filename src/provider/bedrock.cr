@@ -24,12 +24,14 @@ module Provider::Bedrock
       @credentials = AwsCreds.get_credentials(env)
     end
 
-    def default_model : String
-      "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    def defaults : Persona::Persona
+      Persona::Persona.from_hash("bedrock default", {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0"})
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
-      persona = Persona::Persona.zero << {"model" => default_model} << persona
+      persona = defaults << persona
+      puts "Using persona:"
+      puts persona.to_s
       conversation_body = JSON.build do |json|
         json.object do
           json.field "inferenceConfig" do
@@ -43,7 +45,7 @@ module Provider::Bedrock
               "content" => [{"type" => "text", "text" => content}],
             }
           }
-          json.field "system", [{"type" => "text", "text" => persona.key_value_pairs["prompt"]}]
+          json.field "system", [{"type" => "text", "text" => persona.key_value_pairs["prompt"][1]}]
           json.field "toolConfig", {
             "toolChoice" => {
               "any" => {} of String => String,
@@ -64,7 +66,7 @@ module Provider::Bedrock
         sts_token: @credentials["AWS_SESSION_TOKEN"]?
       )
       response_iter = client.converse_stream(
-        persona.key_value_pairs["model"],
+        persona.key_value_pairs["model"][1],
         conversation_body
       )
       if response_iter.is_a?(Tuple(HTTP::Status, String))

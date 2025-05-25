@@ -22,19 +22,21 @@ module Provider::OpenAI
     def initialize(@env : Hash(String, String))
     end
 
-    def default_model : String
-      "gpt-4o-mini"
+    def defaults : Persona::Persona
+      Persona::Persona.from_hash("openai default", {"model" => "gpt-4o-mini"})
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)
-      persona = Persona::Persona.zero << {"model" => default_model} << persona
+      persona = defaults << persona
+      puts "Using persona:"
+      puts persona.to_s
       client = HTTP::Client.new(URI.new("https", "api.openai.com"))
       conversation_body = JSON.build do |json|
         json.object do
           persona.enrich_json(json, SIMPLE_PARAMS)
           json.field("messages",
             [
-              {"role" => "system", "content" => persona.key_value_pairs["prompt"]},
+              {"role" => "system", "content" => persona.key_value_pairs["prompt"][1]},
               *chat.conversation.map { |role, content|
                 {"role" => OpenAI.generic_role_to_openai_role(role), "content" => content}
               },

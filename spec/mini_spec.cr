@@ -88,4 +88,11 @@ describe Mini do
       )
     end
   end
+  it "allows empty values" do
+    Mini.parse(<<-INI
+    [section]
+    key =
+    INI
+    ).should eq({"section" => {"key" => ""}})
+  end
 end

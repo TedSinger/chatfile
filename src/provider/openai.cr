@@ -23,7 +23,15 @@ module Provider::OpenAI
     end
 
     def defaults : Persona::Persona
-      Persona::Persona.from_hash("openai default", {"model" => "gpt-4o-mini"})
+      Persona::Persona.from_hash("openai default",
+        {"model" => "gpt-4o-mini",
+         "temperature" => "0.7",
+         "max_tokens" => "4096",
+         "top_p" => "0.9",
+         "top_k" => "250",
+         "frequency_penalty" => "0.0",
+         "presence_penalty" => "0.0",
+      })
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)

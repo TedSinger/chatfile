@@ -25,7 +25,14 @@ module Provider::Bedrock
     end
 
     def defaults : Persona::Persona
-      Persona::Persona.from_hash("bedrock default", {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0"})
+      Persona::Persona.from_hash("bedrock default",
+        {"model" => "us.anthropic.claude-3-7-sonnet-20250219-v1:0",
+         "temperature" => "0.7",
+         "anthropic_version" => "bedrock-2023-05-31",
+         "max_tokens" => "4096",
+         "stop_sequences" => "[]",
+         "top_p" => "0.9",
+         "top_k" => "250",})
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)

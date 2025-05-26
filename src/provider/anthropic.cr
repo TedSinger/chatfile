@@ -24,7 +24,17 @@ module Provider::Anthropic
     end
 
     def defaults : Persona::Persona
-      Persona::Persona.from_hash("anthropic default", {"model" => "claude-3-7-sonnet-20250219"})
+      Persona::Persona.from_hash("anthropic default",
+        {"model" => "claude-opus-4-20250514",
+         "temperature" => "1",
+         "max_tokens" => "4096",
+         "top_p" => "0.9",
+         "top_k" => "250",
+         "frequency_penalty" => "0.0",
+         "thinking.budget_tokens" => "1024",
+         "thinking.type" => "enabled",
+         "stop_sequences" => "[]",
+      })
     end
 
     def complete(chat : Chat::Chat, persona : Persona::Persona) : Iterator(String)

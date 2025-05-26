@@ -48,7 +48,9 @@ module Persona
       simple_params.each do |json_key, persona_key, type|
         if @key_value_pairs[persona_key]?
           source, value = @key_value_pairs[persona_key]
-          if type == String
+          if value.strip == ""
+            puts "Skipping empty value for #{persona_key} from #{source}"
+          elsif type == String
             json.field(json_key, value)
           elsif type == Int32
             json.field(json_key, value.to_i)

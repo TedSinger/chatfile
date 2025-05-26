@@ -49,6 +49,7 @@ model = meta-llama/llama-3.3-8b-instruct:free
 ```
 
 - `#@ shakespeare` Uses the shakespeare persona defined in the config file
-- `#@ model=claude-opus-4-20250514` Sets a parameter directly. Combine as needed
+- `#@ model=claude-opus-4-20250514` Sets a parameter directly
 - `#@ meta temperature=0.2` Sets the parameter for all blocks
 - `#@ {}` Force the model output to conform to the JSON Schema in this block
+- `chatfile --get-started` to create a default config and chat
